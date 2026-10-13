@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+
+# Local tooling state
+.playwright-mcp/
+.superpowers/
+.claude/
+
+# Build output (always inside the checkout, never global DerivedData)
+build/
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcodeproj
+*.xcworkspace
+*.log
+
+# Private design research (not published)
+research/
+
+# Personal signing settings (copy Config/Signing.local.xcconfig.example)
+Config/Signing.local.xcconfig
+design/screens/

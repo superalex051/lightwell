@@ -1,0 +1,625 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "caches.user",
+      "category": "caches",
+      "risk": "safe",
+      "title": "App caches",
+      "explanation": "Apps keep temporary copies of downloaded and computed data here so they start faster. Each app rebuilds its folder when needed. For best results, quit the app first.",
+      "match": [{"path": "~/Library/Caches", "kind": "childrenOf"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "caches.apple",
+      "category": "caches",
+      "risk": "review",
+      "title": "macOS caches",
+      "explanation": "Caches made by Apple apps and services. They come back on their own, but some services may sync or index again for a while after removal, so look before you remove them.",
+      "match": [{"path": "~/Library/Caches/com.apple.*", "kind": "glob"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "caches.icloud",
+      "category": "caches",
+      "risk": "review",
+      "title": "iCloud sync caches",
+      "explanation": "Working data for iCloud syncing. Removing it is allowed, but your Mac may download and sync a lot again afterwards.",
+      "match": [
+        {"path": "~/Library/Caches/CloudKit", "kind": "subtree"},
+        {"path": "~/Library/Caches/com.apple.bird", "kind": "subtree"}
+      ],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "xcode.deriveddata",
+      "category": "developer",
+      "risk": "safe",
+      "title": "Xcode build data",
+      "explanation": "Intermediate build products and indexes for your Xcode projects. Xcode recreates them on the next build, which may take a little longer once.",
+      "match": [{"path": "~/Library/Developer/Xcode/DerivedData", "kind": "childrenOf"}],
+      "action": {"type": "trash"},
+      "preconditions": [{"type": "appNotRunning", "bundleID": "com.apple.dt.Xcode"}],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "xcode.archives",
+      "category": "developer",
+      "risk": "review",
+      "title": "Old Xcode archives",
+      "explanation": "Archived app builds older than six months. They hold the symbol files needed to read crash reports from versions you shipped, so keep the ones you still support.",
+      "match": [{"path": "~/Library/Developer/Xcode/Archives", "kind": "childrenOf"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": 180, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "xcode.devicesupport",
+      "category": "developer",
+      "risk": "safe",
+      "title": "Device support files",
+      "explanation": "Debugging files Xcode copied from iPhones, watches and other devices you connected. The newest set for each kind of device is kept; older sets are copied again if you connect that device later.",
+      "match": [
+        {"path": "~/Library/Developer/Xcode/iOS DeviceSupport", "kind": "childrenOf"},
+        {"path": "~/Library/Developer/Xcode/watchOS DeviceSupport", "kind": "childrenOf"},
+        {"path": "~/Library/Developer/Xcode/tvOS DeviceSupport", "kind": "childrenOf"},
+        {"path": "~/Library/Developer/Xcode/visionOS DeviceSupport", "kind": "childrenOf"},
+        {"path": "~/Library/Developer/Xcode/macOS DeviceSupport", "kind": "childrenOf"}
+      ],
+      "action": {"type": "trash"},
+      "preconditions": [{"type": "appNotRunning", "bundleID": "com.apple.dt.Xcode"}],
+      "minAgeDays": null, "keepNewest": 1, "commandHint": null
+    },
+    {
+      "id": "simulator.unavailable",
+      "category": "developer",
+      "risk": "safe",
+      "title": "Simulators for missing runtimes",
+      "explanation": "Simulators whose system version is no longer installed cannot start anymore. Apple's command line tool removes them cleanly.",
+      "match": [],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "xcrun simctl delete unavailable"
+    },
+    {
+      "id": "simulator.devices",
+      "category": "developer",
+      "risk": "review",
+      "title": "Simulator devices",
+      "explanation": "Each simulated device stores the test apps you installed and their data. Remove devices you no longer use with Apple's tool so Xcode stays in sync.",
+      "match": [{"path": "~/Library/Developer/CoreSimulator/Devices", "kind": "childrenOf"}],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "xcrun simctl delete <device id>"
+    },
+    {
+      "id": "simulator.runtimes",
+      "category": "developer",
+      "risk": "review",
+      "title": "Simulator system images",
+      "explanation": "Full copies of iOS and other systems used by simulators, often 7 to 10 GB each. Xcode can download them again. Remove them with Apple's tool, never by deleting the files.",
+      "match": [
+        {"path": "/Library/Developer/CoreSimulator/Images", "kind": "subtree"},
+        {"path": "/Library/Developer/CoreSimulator/Volumes", "kind": "subtree"}
+      ],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "xcrun simctl runtime delete <runtime id>"
+    },
+    {
+      "id": "simulator.caches",
+      "category": "developer",
+      "risk": "safe",
+      "title": "Simulator caches",
+      "explanation": "Shared system caches prepared for simulators. They are rebuilt the next time a simulator starts.",
+      "match": [{"path": "~/Library/Developer/CoreSimulator/Caches", "kind": "childrenOf"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "xcode.previews",
+      "category": "developer",
+      "risk": "safe",
+      "title": "Xcode preview devices",
+      "explanation": "Devices Xcode creates for SwiftUI previews and playgrounds. Xcode makes new ones when you open a preview again.",
+      "match": [
+        {"path": "~/Library/Developer/Xcode/UserData/Previews", "kind": "childrenOf"},
+        {"path": "~/Library/Developer/XCPGDevices", "kind": "childrenOf"}
+      ],
+      "action": {"type": "trash"},
+      "preconditions": [{"type": "appNotRunning", "bundleID": "com.apple.dt.Xcode"}],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "xcode.caches",
+      "category": "developer",
+      "risk": "safe",
+      "title": "Xcode caches",
+      "explanation": "Documentation and index caches kept by Xcode. Xcode refills them as you work.",
+      "match": [{"path": "~/Library/Caches/com.apple.dt.Xcode", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [{"type": "appNotRunning", "bundleID": "com.apple.dt.Xcode"}],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "npm.cache",
+      "category": "packages",
+      "risk": "safe",
+      "title": "npm download cache",
+      "explanation": "Copies of JavaScript packages npm downloaded before. npm fetches them again when a project needs them.",
+      "match": [{"path": "~/.npm/_cacache", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "npm cache clean --force"
+    },
+    {
+      "id": "yarn.cache",
+      "category": "packages",
+      "risk": "safe",
+      "title": "Yarn download cache",
+      "explanation": "Packages Yarn saved for reuse. They are downloaded again the next time a project installs them.",
+      "match": [
+        {"path": "~/Library/Caches/Yarn", "kind": "subtree"},
+        {"path": "~/.yarn/berry/cache", "kind": "subtree"}
+      ],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "yarn cache clean"
+    },
+    {
+      "id": "pnpm.store",
+      "category": "packages",
+      "risk": "safe",
+      "title": "pnpm package store",
+      "explanation": "The shared package store pnpm links into your projects. The prune command keeps what your projects still use; removing the whole store means projects download packages again.",
+      "match": [
+        {"path": "~/Library/pnpm/store", "kind": "subtree"},
+        {"path": "~/.pnpm-store", "kind": "subtree"}
+      ],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "pnpm store prune"
+    },
+    {
+      "id": "bun.cache",
+      "category": "packages",
+      "risk": "safe",
+      "title": "Bun install cache",
+      "explanation": "Packages Bun downloaded for earlier installs. Bun gets them again when needed. Bun itself is not affected.",
+      "match": [{"path": "~/.bun/install/cache", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "bun pm cache rm"
+    },
+    {
+      "id": "homebrew.cache",
+      "category": "packages",
+      "risk": "safe",
+      "title": "Homebrew downloads",
+      "explanation": "Installer files Homebrew kept after installing or updating software. Your installed tools keep working without them.",
+      "match": [{"path": "~/Library/Caches/Homebrew", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "brew cleanup"
+    },
+    {
+      "id": "pip.cache",
+      "category": "packages",
+      "risk": "safe",
+      "title": "pip download cache",
+      "explanation": "Python packages pip downloaded before. pip fetches them again when you install them.",
+      "match": [{"path": "~/Library/Caches/pip", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "pip cache purge"
+    },
+    {
+      "id": "uv.cache",
+      "category": "packages",
+      "risk": "safe",
+      "title": "uv cache",
+      "explanation": "Python packages and builds saved by uv. uv downloads or rebuilds them when a project needs them.",
+      "match": [{"path": "~/.cache/uv", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "uv cache clean"
+    },
+    {
+      "id": "poetry.cache",
+      "category": "packages",
+      "risk": "safe",
+      "title": "Poetry cache",
+      "explanation": "Packages and environments cached by Poetry. Poetry recreates them on the next install.",
+      "match": [{"path": "~/Library/Caches/pypoetry", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "gradle.cache",
+      "category": "packages",
+      "risk": "review",
+      "title": "Gradle cache",
+      "explanation": "Libraries and build outputs Gradle saved. Removing them is fine, but your next Android or Java build will download a lot again.",
+      "match": [{"path": "~/.gradle/caches", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "maven.repository",
+      "category": "packages",
+      "risk": "review",
+      "title": "Maven local repository",
+      "explanation": "Java libraries Maven downloaded for your projects. They come back on the next build, at the cost of time and bandwidth.",
+      "match": [{"path": "~/.m2/repository", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "cargo.registry",
+      "category": "packages",
+      "risk": "review",
+      "title": "Cargo registry",
+      "explanation": "Rust crates Cargo downloaded. Your next Rust build downloads the ones it needs again.",
+      "match": [{"path": "~/.cargo/registry", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "go.buildcache",
+      "category": "packages",
+      "risk": "safe",
+      "title": "Go build cache",
+      "explanation": "Compiled pieces Go saves to speed up builds. Go fills it again as you build.",
+      "match": [{"path": "~/Library/Caches/go-build", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "go clean -cache"
+    },
+    {
+      "id": "go.modcache",
+      "category": "packages",
+      "risk": "review",
+      "title": "Go module cache",
+      "explanation": "Source code of Go modules your projects use. Go downloads them again when needed. Go marks these files read only, so its own command works best.",
+      "match": [{"path": "~/go/pkg/mod", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "go clean -modcache"
+    },
+    {
+      "id": "cocoapods.cache",
+      "category": "packages",
+      "risk": "safe",
+      "title": "CocoaPods cache",
+      "explanation": "Pod sources CocoaPods saved for reuse. They are downloaded again on the next pod install.",
+      "match": [{"path": "~/Library/Caches/CocoaPods", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "swiftpm.cache",
+      "category": "packages",
+      "risk": "safe",
+      "title": "Swift package cache",
+      "explanation": "Swift packages downloaded by Xcode and the Swift tools. They are fetched again when a project resolves its packages.",
+      "match": [{"path": "~/Library/Caches/org.swift.swiftpm", "kind": "subtree"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "docker.disk",
+      "category": "containers",
+      "risk": "review",
+      "title": "Docker disk image",
+      "explanation": "One large file that holds all Docker images, containers and volumes. It usually uses less space than its size suggests. Free space inside it with Docker's own tools while Docker is running; never delete the file itself.",
+      "match": [{"path": "~/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw", "kind": "exact"}],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "docker system prune"
+    },
+    {
+      "id": "orbstack.data",
+      "category": "containers",
+      "risk": "review",
+      "title": "OrbStack data",
+      "explanation": "Containers, images and Linux machines managed by OrbStack. Clean up from OrbStack or with Docker's prune command instead of deleting files.",
+      "match": [{"path": "~/.orbstack", "kind": "subtree"}],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "docker system prune"
+    },
+    {
+      "id": "ai.models",
+      "category": "ai",
+      "risk": "review",
+      "title": "Downloaded AI models",
+      "explanation": "Language and image models saved by tools such as Ollama, LM Studio and Hugging Face. They are often many gigabytes each and must be downloaded again if you want them back.",
+      "match": [
+        {"path": "~/.ollama/models", "kind": "subtree"},
+        {"path": "~/.cache/huggingface", "kind": "subtree"},
+        {"path": "~/.lmstudio/models", "kind": "subtree"}
+      ],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "dev.artifacts",
+      "category": "developer",
+      "risk": "review",
+      "title": "Project build folders",
+      "explanation": "Folders such as node_modules, build output and virtual environments inside your projects. Running the project's install or build command creates them again. Check the project age before removing.",
+      "match": [],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null,
+      "detector": "devArtifacts"
+    },
+    {
+      "id": "trash.items",
+      "category": "trash",
+      "risk": "review",
+      "title": "Items in the Trash",
+      "explanation": "Things you already moved to the Trash. They still use space until they are deleted for good, which cannot be undone.",
+      "match": [
+        {"path": "~/.Trash", "kind": "childrenOf"},
+        {"path": "/Volumes/*/.Trashes/*/*", "kind": "glob"}
+      ],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "downloads.items",
+      "category": "downloads",
+      "risk": "review",
+      "title": "Downloads",
+      "explanation": "Everything in your Downloads folder. Sorting by date and type helps spot files you no longer need.",
+      "match": [{"path": "~/Downloads", "kind": "childrenOf"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "downloads.installers",
+      "category": "downloads",
+      "risk": "review",
+      "title": "Old installers in Downloads",
+      "explanation": "Disk images, installer packages and archives in Downloads that are more than a month old. Once the app is installed, the installer is usually no longer needed.",
+      "match": [],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": 30, "keepNewest": null, "commandHint": null,
+      "detector": "oldInstallers"
+    },
+    {
+      "id": "ios.backups",
+      "category": "devices",
+      "risk": "dangerous",
+      "title": "iPhone and iPad backups",
+      "explanation": "Local backups of your devices. One of them may be the only copy of a phone's data, so manage them in Finder, where you can see each device and date.",
+      "match": [{"path": "~/Library/Application Support/MobileSync/Backup", "kind": "childrenOf"}],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "mail.downloads",
+      "category": "mail",
+      "risk": "safe",
+      "title": "Opened mail attachments",
+      "explanation": "Copies Mail makes when you open an attachment. The original stays in the message.",
+      "match": [{"path": "~/Library/Containers/com.apple.mail/Data/Library/Mail Downloads", "kind": "childrenOf"}],
+      "action": {"type": "trash"},
+      "preconditions": [{"type": "appNotRunning", "bundleID": "com.apple.mail"}],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "messages.attachments",
+      "category": "media",
+      "risk": "never",
+      "title": "Messages attachments",
+      "explanation": "Photos and files from your conversations. The Messages database points to them, so remove them inside Messages: open Settings, General, and choose how long to keep messages.",
+      "match": [{"path": "~/Library/Messages/Attachments", "kind": "subtree"}],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "photos.library",
+      "category": "media",
+      "risk": "dangerous",
+      "title": "Photos library",
+      "explanation": "Your photo library. Never change what is inside it. To use less space, turn on Optimize Mac Storage in the iCloud section of Photos settings.",
+      "match": [{"path": "~/Pictures/*.photoslibrary", "kind": "glob"}],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "icloud.drive",
+      "category": "cloud",
+      "risk": "never",
+      "title": "iCloud Drive",
+      "explanation": "Files here sync with iCloud, so deleting them removes them from all your devices. To free space but keep them in iCloud, turn on Optimize Mac Storage in iCloud settings, or choose Remove Download on a file in Finder.",
+      "match": [{"path": "~/Library/Mobile Documents", "kind": "subtree"}],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "cloud.providers",
+      "category": "cloud",
+      "risk": "never",
+      "title": "Cloud drive folders",
+      "explanation": "Folders synced by services such as Google Drive, OneDrive and Dropbox. Deleting files here deletes them in the cloud too. Use the service's option to free up space instead.",
+      "match": [{"path": "~/Library/CloudStorage", "kind": "childrenOf"}],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "timemachine.snapshots",
+      "category": "system",
+      "risk": "review",
+      "title": "Time Machine local snapshots",
+      "explanation": "Snapshots of your disk that macOS keeps for a while and removes by itself when space runs low. You can list them and remove one by date with Apple's tool.",
+      "match": [],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": "tmutil listlocalsnapshots /"
+    },
+    {
+      "id": "system.purgeable",
+      "category": "system",
+      "risk": "review",
+      "title": "Purgeable space",
+      "explanation": "Space macOS can free on its own when it needs room, for example by removing local copies of files stored in iCloud. There is nothing to clean by hand.",
+      "match": [],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "logs.user",
+      "category": "logs",
+      "risk": "safe",
+      "title": "App logs",
+      "explanation": "Diagnostic text files written by apps. Apps start new ones when they need to.",
+      "match": [{"path": "~/Library/Logs", "kind": "childrenOf"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "logs.system",
+      "category": "logs",
+      "risk": "review",
+      "title": "System logs and crash reports",
+      "explanation": "Logs and crash reports written for the whole Mac. Removing them usually needs an administrator, and they can help when you report a problem.",
+      "match": [
+        {"path": "/Library/Logs/DiagnosticReports", "kind": "childrenOf"},
+        {"path": "/private/var/log", "kind": "childrenOf"}
+      ],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "system.coredumps",
+      "category": "system",
+      "risk": "review",
+      "title": "Crash memory dumps",
+      "explanation": "Memory snapshots saved when a program crashed. They are only useful to developers debugging that crash.",
+      "match": [{"path": "/cores", "kind": "childrenOf"}],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "app.leftovers",
+      "category": "apps",
+      "risk": "review",
+      "title": "Leftovers from removed apps",
+      "explanation": "Settings and support files that stay behind after an app is deleted. Telling them apart from files of installed apps is hard, so this check comes in a later version.",
+      "match": [],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "app.languagefiles",
+      "category": "apps",
+      "risk": "never",
+      "title": "App language files",
+      "explanation": "Translations inside apps. Removing them breaks the app's signature on current macOS and saves little space, so they are always left alone.",
+      "match": [
+        {"path": "/Applications/*.app/Contents/Resources/*.lproj", "kind": "glob"},
+        {"path": "~/Applications/*.app/Contents/Resources/*.lproj", "kind": "glob"}
+      ],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "apps.installed",
+      "category": "apps",
+      "risk": "review",
+      "title": "Installed apps",
+      "explanation": "Apps in your Applications folders, largest first. If an app came with its own uninstaller, use that instead, since it also removes helpers it installed.",
+      "match": [
+        {"path": "/Applications/*.app", "kind": "glob"},
+        {"path": "~/Applications/*.app", "kind": "glob"}
+      ],
+      "action": {"type": "trash"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "apps.xcode",
+      "category": "apps",
+      "risk": "review",
+      "title": "Xcode versions",
+      "explanation": "Each copy of Xcode takes more than 10 GB. If you keep several versions, remove the ones you no longer build with.",
+      "match": [{"path": "/Applications/Xcode*.app", "kind": "glob"}],
+      "action": {"type": "trash"},
+      "preconditions": [{"type": "appNotRunning", "bundleID": "com.apple.dt.Xcode"}],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "browser.profiles",
+      "category": "apps",
+      "risk": "dangerous",
+      "title": "Browser profiles",
+      "explanation": "Your browser history, saved logins, bookmarks and extensions. Clear browsing data from the browser itself instead.",
+      "match": [
+        {"path": "~/Library/Application Support/Google/Chrome", "kind": "subtree"},
+        {"path": "~/Library/Application Support/Firefox", "kind": "subtree"}
+      ],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "system.memoryfiles",
+      "category": "system",
+      "risk": "never",
+      "title": "Sleep image and swap",
+      "explanation": "Files macOS uses for memory and sleep. The system manages them and they are never removed by hand.",
+      "match": [
+        {"path": "/private/var/vm/sleepimage", "kind": "exact"},
+        {"path": "/private/var/vm/swapfile*", "kind": "exact"}
+      ],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    },
+    {
+      "id": "system.tempitems",
+      "category": "system",
+      "risk": "never",
+      "title": "System temporary items",
+      "explanation": "Temporary files and caches macOS manages for each user. Restarting your Mac clears them safely.",
+      "match": [
+        {"path": "/private/var/folders/*/*/C", "kind": "exact"},
+        {"path": "/private/var/folders/*/*/T", "kind": "exact"}
+      ],
+      "action": {"type": "guide"},
+      "preconditions": [],
+      "minAgeDays": null, "keepNewest": null, "commandHint": null
+    }
+  ]
+}

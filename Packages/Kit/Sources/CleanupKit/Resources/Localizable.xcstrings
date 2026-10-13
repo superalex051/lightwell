@@ -1,0 +1,193 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "A folder inside this item could not be read, so it was left alone. Giving Lightwell Full Disk Access in System Settings may help.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A folder inside this item could not be read, so it was left alone. Giving Lightwell Full Disk Access in System Settings may help."
+          }
+        }
+      }
+    },
+    "Only you can choose to remove this item. Suggestions from the assistant are not enough.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only you can choose to remove this item. Suggestions from the assistant are not enough."
+          }
+        }
+      }
+    },
+    "Quit the app that uses this item, then try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit the app that uses this item, then try again."
+          }
+        }
+      }
+    },
+    "The cleanup stopped before reaching this item.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The cleanup stopped before reaching this item."
+          }
+        }
+      }
+    },
+    "This disk has no Trash. You can delete the item permanently instead.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This disk has no Trash. You can delete the item permanently instead."
+          }
+        }
+      }
+    },
+    "This folder contains another disk, so it was left alone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This folder contains another disk, so it was left alone."
+          }
+        }
+      }
+    },
+    "This folder holds something protected, so it was left alone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This folder holds something protected, so it was left alone."
+          }
+        }
+      }
+    },
+    "This is where another disk is attached, so it was left alone. Eject the disk instead.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is where another disk is attached, so it was left alone. Eject the disk instead."
+          }
+        }
+      }
+    },
+    "This item could not be removed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item could not be removed."
+          }
+        }
+      }
+    },
+    "This item is already in the Trash. Delete it permanently to free its space.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item is already in the Trash. Delete it permanently to free its space."
+          }
+        }
+      }
+    },
+    "This item is locked. Unlock it in its Get Info window in Finder first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item is locked. Unlock it in its Get Info window in Finder first."
+          }
+        }
+      }
+    },
+    "This item is no longer in the Trash.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item is no longer in the Trash."
+          }
+        }
+      }
+    },
+    "This item is no longer there. It may have been moved or deleted already.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item is no longer there. It may have been moved or deleted already."
+          }
+        }
+      }
+    },
+    "This item is outside the folder this cleanup may change.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item is outside the folder this cleanup may change."
+          }
+        }
+      }
+    },
+    "This item is protected and was left alone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item is protected and was left alone."
+          }
+        }
+      }
+    },
+    "This item needs a closer look now. Review it again before removing it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item needs a closer look now. Review it again before removing it."
+          }
+        }
+      }
+    },
+    "You do not have permission to remove this item.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You do not have permission to remove this item."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Lightwell</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Folder</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>None</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.folder</string>
+				<string>public.volume</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>26.0</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright 2026 Alex Luncan. MIT License.</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSSupportsSuddenTermination</key>
+	<false/>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>Lightwell reads the names and sizes of items on your Desktop to show what uses space. It never opens their contents.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Lightwell reads the names and sizes of items in Documents to show what uses space. It never opens their contents.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Lightwell reads the names and sizes of items in Downloads to show what uses space. It never opens their contents.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>Lightwell reads the names and sizes of items on removable disks to show what uses space. It never opens their contents.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>Lightwell reads the names and sizes of items on network disks to show what uses space. It never opens their contents.</string>
+	<key>NSFileProviderDomainUsageDescription</key>
+	<string>Lightwell reads the names and sizes of items in cloud storage folders to show what uses space. It never opens their contents.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Lightwell reads the size of your photo library to show what uses space. It never looks at your photos.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Lightwell reads the size of calendar data to show what uses space. It never reads your events.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Lightwell reads the size of contacts data to show what uses space. It never reads your contacts.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Lightwell reads the size of reminders data to show what uses space. It never reads your reminders.</string>
+</dict>
+</plist>

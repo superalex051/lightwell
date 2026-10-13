@@ -1,0 +1,3 @@
+import MCPServerKit
+
+MCPHelperMain.run()

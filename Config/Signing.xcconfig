@@ -1,0 +1,10 @@
+// Signing defaults: ad hoc, so forks build out of the box.
+// Personal values go in the gitignored Signing.local.xcconfig (see the .example file).
+
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = -
+DEVELOPMENT_TEAM =
+PROVISIONING_PROFILE_SPECIFIER =
+OTHER_CODE_SIGN_FLAGS = --timestamp=none
+
+#include? "Signing.local.xcconfig"

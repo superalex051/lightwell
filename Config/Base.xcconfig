@@ -1,0 +1,21 @@
+// Shared build settings for every Xcode target. Single-writer file (orchestrator).
+
+APP_NAME = Lightwell
+APP_BUNDLE_ID = com.alexluncan.lightwell
+
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+MACOSX_DEPLOYMENT_TARGET = 26.0
+SDKROOT = macosx
+ARCHS = arm64
+SWIFT_VERSION = 6.0
+SWIFT_STRICT_CONCURRENCY = complete
+
+ENABLE_HARDENED_RUNTIME = YES
+ENABLE_USER_SCRIPT_SANDBOXING = YES
+DEAD_CODE_STRIPPING = YES
+LOCALIZATION_PREFERS_STRING_CATALOGS = YES
+SWIFT_EMIT_LOC_STRINGS = YES
+
+#include "Signing.xcconfig"

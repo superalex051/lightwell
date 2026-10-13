@@ -1,0 +1,1286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lightwell: three design directions</title>
+<style>
+/* ---------- Apple system faces (Safari resolves ui-* keywords, Chromium uses the local files) ---------- */
+@font-face{font-family:"LW Rounded";src:local("SF Pro Rounded"),local(".SF NS Rounded"),url("file:///System/Library/Fonts/SFNSRounded.ttf");font-weight:100 900}
+@font-face{font-family:"LW Serif";src:local("New York"),local(".New York"),url("file:///System/Library/Fonts/NewYork.ttf");font-weight:100 900}
+@font-face{font-family:"LW Serif";font-style:italic;src:local("New York Italic"),url("file:///System/Library/Fonts/NewYorkItalic.ttf");font-weight:100 900}
+@font-face{font-family:"LW Mono";src:local("SF Mono"),local(".SF NS Mono"),url("file:///System/Library/Fonts/SFNSMono.ttf");font-weight:100 900}
+
+:root{
+  --f-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --f-round: ui-rounded, "LW Rounded", -apple-system, system-ui, sans-serif;
+  --f-serif: ui-serif, "LW Serif", "Iowan Old Style", Charter, Georgia, serif;
+  --f-mono: ui-monospace, "LW Mono", "SF Mono", Menlo, monospace;
+  --ease-out: cubic-bezier(.23,1,.32,1);
+  --ease-io: cubic-bezier(.77,0,.175,1);
+  --page:#ECEBE7; --page-ink:#1C1C1A; --page-ink2:#6A6863; --page-hair:rgba(28,28,26,.1); --page-chip:#FFFFFF;
+}
+body.dark{ --page:#0F1011; --page-ink:#ECEAE5; --page-ink2:#8E8B85; --page-hair:rgba(236,234,229,.1); --page-chip:#1B1C1E; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--page);color:var(--page-ink);font-family:var(--f-ui);-webkit-font-smoothing:antialiased;font-size:13px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- presentation shell ---------- */
+.deck{max-width:1320px;margin:0 auto;padding:22px 32px 40px}
+.deck-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand b{font-family:var(--f-round);font-size:17px;font-weight:650;letter-spacing:-.01em}
+.brand span{color:var(--page-ink2);font-size:12px}
+.tabs{display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--page-hair)}
+.tab{padding:6px 14px;border-radius:9px;font-weight:550;color:var(--page-ink2);transition:background-color .18s ease,color .18s ease}
+.tab[aria-pressed=true]{background:var(--page-chip);color:var(--page-ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tab small{font-weight:450;opacity:.6;margin-right:6px}
+.toggles{justify-self:end;display:flex;gap:8px}
+.seg{display:flex;padding:3px;border-radius:10px;background:var(--page-hair)}
+.seg button{padding:4px 10px;border-radius:7px;font-size:12px;color:var(--page-ink2);font-weight:550}
+.seg button[aria-pressed=true]{background:var(--page-chip);color:var(--page-ink)}
+.dirdesc{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:baseline;margin:18px 4px 14px;max-width:1000px}
+.dirdesc h2{font-size:22px;font-weight:650;letter-spacing:-.02em}
+.dirdesc p{color:var(--page-ink2);line-height:1.5;max-width:82ch}
+.stage-wrap{display:flex;justify-content:center}
+.stage{width:1256px;height:812px;border-radius:20px;position:relative;overflow:hidden;display:grid;place-items:center;transition:background .3s ease}
+.jump{display:flex;gap:6px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.jump button{padding:5px 11px;border-radius:999px;border:1px solid var(--page-hair);color:var(--page-ink2);font-size:12px}
+.jump button[aria-pressed=true]{color:var(--page-ink);background:var(--page-chip)}
+.jump kbd{font-family:var(--f-mono);font-size:10px;opacity:.6;margin-right:5px}
+.deck-foot{margin:26px 4px 0;padding-top:16px;border-top:1px solid var(--page-hair);display:flex;justify-content:space-between;gap:24px;color:var(--page-ink2);font-size:12px;line-height:1.5}
+.deck-foot b{color:var(--page-ink);font-weight:600}
+
+/* ---------- window chrome shared ---------- */
+.win{width:1200px;height:760px;border-radius:26px;position:relative;overflow:hidden;color:var(--ink);background:var(--win);
+  box-shadow:0 40px 90px -30px var(--shadow),0 12px 30px -12px var(--shadow),0 0 0 .5px var(--edge);font-family:var(--f-ui)}
+.lights{position:absolute;top:19px;left:21px;display:flex;gap:8px;z-index:5}
+.lights i{width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.18)}
+.lights i:nth-child(1){background:#FF5F57}.lights i:nth-child(2){background:#FEBC2E}.lights i:nth-child(3){background:#28C840}
+.side{position:absolute;left:8px;top:8px;bottom:8px;border-radius:19px;background:var(--glass);
+  -webkit-backdrop-filter:blur(28px) saturate(1.7);backdrop-filter:blur(28px) saturate(1.7);
+  box-shadow:inset 0 .5px 0 var(--spec),inset 0 0 0 .5px var(--glass-edge),0 10px 30px -18px var(--shadow);z-index:3;display:flex;flex-direction:column}
+.main{position:absolute;top:0;bottom:0;right:0;display:flex;flex-direction:column}
+.tb{height:54px;display:flex;align-items:center;gap:8px;padding:0 14px;flex:none;position:relative;z-index:2}
+.cap{height:32px;min-width:32px;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 11px;background:var(--cap);
+  -webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);
+  box-shadow:inset 0 .5px 0 var(--spec),0 0 0 .5px var(--hair2),0 3px 10px -4px var(--shadow);color:var(--ink);font-weight:520;font-size:13px;
+  transition:transform .16s var(--ease-out),background-color .18s ease}
+.cap:active,.btn:active,.chip-btn:active{transform:scale(.97)}
+.cap-group{display:inline-flex;border-radius:16px;background:var(--cap);box-shadow:inset 0 .5px 0 var(--spec),0 0 0 .5px var(--hair2),0 3px 10px -4px var(--shadow)}
+.cap-group .cap{background:none;box-shadow:none}
+.cap .ico{width:16px;height:16px}
+.ico{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.content{flex:1;overflow:auto;position:relative}
+.content::-webkit-scrollbar{width:0}
+.screen{animation:scr .26s var(--ease-out) both}
+@keyframes scr{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.btn{height:32px;padding:0 15px;border-radius:16px;display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:13px;transition:transform .16s var(--ease-out),background-color .18s ease,opacity .18s ease;white-space:nowrap}
+.btn .ico{width:15px;height:15px}
+.btn-pri{background:var(--accent);color:var(--accent-ink)}
+.btn-sec{background:var(--fill);color:var(--ink)}
+.btn-ghost{color:var(--ink2)}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.mono{font-family:var(--f-mono);font-size:11.5px;letter-spacing:-.01em}
+.muted{color:var(--ink2)} .faint{color:var(--ink3)}
+.risk{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 8px 2px 6px;border-radius:999px;white-space:nowrap}
+.risk .ico{width:12px;height:12px;stroke-width:2}
+.r-safe{color:var(--safe);background:color-mix(in oklch,var(--safe) 13%,transparent)}
+.r-review{color:var(--review);background:color-mix(in oklch,var(--review) 14%,transparent)}
+.r-keep,.r-locked{color:var(--keep);background:color-mix(in oklch,var(--keep) 14%,transparent)}
+.dot{width:9px;height:9px;border-radius:3px;flex:none;display:inline-block}
+.check{width:17px;height:17px;border-radius:5px;flex:none;display:grid;place-items:center;box-shadow:inset 0 0 0 1.2px var(--ink3);transition:background-color .15s ease}
+.check .ico{width:12px;height:12px;stroke-width:2.4;opacity:0;color:var(--accent-ink)}
+.check.on{background:var(--accent);box-shadow:none}.check.on .ico{opacity:1}
+.check.na{opacity:.35}
+.toast{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:14px;padding:9px 10px 9px 16px;border-radius:18px;
+  background:var(--toast);color:var(--toast-ink);box-shadow:0 14px 34px -12px rgba(0,0,0,.4);font-weight:520;animation:toast .3s var(--ease-out) both;white-space:nowrap}
+.toast button{padding:5px 12px;border-radius:12px;background:color-mix(in oklch,var(--toast-ink) 16%,transparent);font-weight:600}
+@keyframes toast{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+.veil{position:absolute;inset:0;background:var(--veil);z-index:15;animation:fade .2s ease both}
+@keyframes fade{from{opacity:0}}
+.sheet{position:absolute;left:50%;top:54px;width:460px;transform:translateX(-50%);z-index:16;border-radius:22px;background:var(--sheet);padding:22px 22px 18px;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.45),0 0 0 .5px var(--hair2);animation:sheet .28s var(--ease-out) both}
+@keyframes sheet{from{opacity:0;transform:translate(-50%,-10px) scale(.98)}to{opacity:1;transform:translate(-50%,0)}}
+.sheet h3{font-size:17px;font-weight:650;letter-spacing:-.01em;margin-bottom:8px}
+.sheet p{color:var(--ink2);line-height:1.5}
+.sheet .warn{display:flex;gap:10px;align-items:flex-start;margin:14px 0;padding:10px 12px;border-radius:12px;background:color-mix(in oklch,var(--review) 12%,transparent);color:var(--ink);line-height:1.45}
+.sheet .warn .ico{color:var(--review);margin-top:1px}
+.sheet ul{list-style:none;margin:12px 0;max-height:150px;overflow:auto;border-top:1px solid var(--hair)}
+.sheet li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--hair);font-size:12px}
+.sheet .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+#tip{position:fixed;z-index:100;pointer-events:none;padding:7px 10px;border-radius:10px;background:rgba(22,22,20,.92);color:#F4F2EC;font-size:12px;line-height:1.35;opacity:0;transition:opacity .12s ease;max-width:280px;font-family:var(--f-ui)}
+#tip b{font-weight:600}#tip .mono{color:#BDB9B0;display:block;margin-top:2px}
+
+/* tool chips + chat shared */
+.tools{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.tool{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px 3px 6px;border-radius:999px;background:var(--fill);color:var(--ink2)}
+.tool .ico{width:12px;height:12px}
+.tool code{font-family:var(--f-mono);font-size:10.5px;color:var(--ink)}
+.prop{border-radius:16px;padding:12px 14px;margin:8px 0;background:var(--raise);box-shadow:0 0 0 .5px var(--hair2),0 6px 18px -12px var(--shadow)}
+.prop-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px}
+.prop-h b{font-weight:620}
+.prop p{color:var(--ink2);line-height:1.45;font-size:12.5px}
+.prop .acts{display:flex;gap:6px;margin-top:10px;align-items:center}
+.prop .done{display:inline-flex;align-items:center;gap:6px;color:var(--safe);font-weight:600;font-size:12px}
+.prop.rej{background:none;box-shadow:inset 0 0 0 1px var(--hair2)}
+.prop.rej .prop-h b{color:var(--ink2)}
+.chip-btn{height:26px;padding:0 11px;border-radius:13px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:transform .16s var(--ease-out)}
+.chip-btn.pri{background:var(--accent);color:var(--accent-ink)}
+.chip-btn.sec{background:var(--fill);color:var(--ink)}
+.chip-btn .ico{width:13px;height:13px}
+.composer{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-radius:20px;background:var(--raise);box-shadow:0 0 0 .5px var(--hair2)}
+.composer span{flex:1;color:var(--ink3)}
+.composer .send{width:28px;height:28px;border-radius:14px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.sugg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.sugg button{font-size:11.5px;padding:4px 10px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--hair2);color:var(--ink2)}
+.ai-foot{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink3);margin-top:8px}
+.ai-foot .ico{width:12px;height:12px}
+
+/* treemap shared */
+.tm{position:relative}
+.tm-cell{position:absolute;overflow:hidden;cursor:pointer;transition:filter .15s ease,transform .18s var(--ease-out)}
+.tm-cell:hover{filter:brightness(1.05) saturate(1.1)}
+.tm-sub{position:absolute;border-radius:5px}
+.tm-lab{position:absolute;left:9px;top:7px;right:8px;font-size:12px;font-weight:620;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm-lab small{display:block;font-weight:500;opacity:.72;font-size:11px;margin-top:1px}
+
+/* ================= Direction A: Daylight ================= */
+.dA{--win:#F7F5F0;--raise:#FFFFFF;--ink:#1D1C19;--ink2:#5E5B54;--ink3:#8E8A82;--hair:rgba(29,28,25,.08);--hair2:rgba(29,28,25,.11);--fill:rgba(29,28,25,.055);
+  --glass:rgba(250,248,243,.66);--glass-edge:rgba(255,255,255,.75);--spec:rgba(255,255,255,.95);--cap:rgba(255,255,255,.7);--shadow:rgba(70,60,40,.28);--edge:rgba(0,0,0,.14);
+  --accent:#1D1C19;--accent-ink:#F7F5F0;--light:#F4C95D;--safe:#2F8A57;--review:#C2621E;--keep:#6F7680;--toast:#1D1C19;--toast-ink:#F7F5F0;--veil:rgba(247,245,240,.55);--sheet:#FFFFFF;
+  --c-proj:#A9C2EC;--c-dev:#93CDB8;--c-apps:#EDBE94;--c-appdata:#E9D592;--c-media:#EDA9A6;--c-caches:#BEDB95;--c-dl:#97D3E2;--c-sys:#CFCAC0;--c-other:#E3DFD7;--c-ink:#1D1C19}
+body.dark .dA{--win:#1B1A18;--raise:#25241F;--ink:#F2EFE8;--ink2:#B3AEA4;--ink3:#7E796F;--hair:rgba(242,239,232,.08);--hair2:rgba(242,239,232,.12);--fill:rgba(242,239,232,.07);
+  --glass:rgba(42,40,36,.6);--glass-edge:rgba(255,255,255,.1);--spec:rgba(255,255,255,.14);--cap:rgba(62,59,54,.62);--shadow:rgba(0,0,0,.6);--edge:rgba(255,255,255,.1);
+  --accent:#F2EFE8;--accent-ink:#1B1A18;--light:#F2C14E;--safe:#5DBB84;--review:#E58B4B;--keep:#9AA1AA;--toast:#F2EFE8;--toast-ink:#1B1A18;--veil:rgba(20,19,17,.55);--sheet:#2A2924;
+  --c-proj:#3F5F95;--c-dev:#2F6E5C;--c-apps:#8A5A33;--c-appdata:#7F6C2C;--c-media:#8A4A4A;--c-caches:#55702F;--c-dl:#2D6878;--c-sys:#4A4741;--c-other:#34322E;--c-ink:#F2EFE8}
+.wall-A{background:linear-gradient(112deg,transparent 28%,rgba(255,243,206,.75) 42%,rgba(255,243,206,.2) 52%,transparent 62%),linear-gradient(168deg,#E8E0CF 0%,#D7DEDA 55%,#C9D6DA 100%)}
+body.dark .wall-A{background:linear-gradient(112deg,transparent 28%,rgba(255,214,140,.10) 42%,transparent 60%),linear-gradient(168deg,#2B2823,#1C2427)}
+.dA .side{width:228px;padding:52px 10px 10px}
+.dA .main{left:244px}
+.dA .nav-h{font-size:11px;font-weight:600;color:var(--ink3);padding:12px 10px 5px}
+.dA .nav{display:flex;align-items:center;gap:9px;height:30px;padding:0 10px;border-radius:10px;font-weight:520;color:var(--ink);transition:background-color .15s ease}
+.dA .nav .ico{color:var(--ink2)}
+.dA .nav[aria-current=true]{background:var(--fill)}
+.dA .nav[aria-current=true] .ico{color:var(--ink)}
+.dA .nav .badge{margin-left:auto;font-size:11px;color:var(--ink2)}
+.dA .side-foot{margin-top:auto;padding:12px;border-radius:14px;background:var(--fill)}
+.dA .side-foot .lbl{font-size:11px;color:var(--ink2);margin-bottom:2px}
+.dA .side-foot .big{font-family:var(--f-round);font-size:22px;font-weight:650;letter-spacing:-.01em}
+.dA .minibar{height:6px;border-radius:3px;background:var(--hair2);margin-top:8px;overflow:hidden;display:flex}
+.dA .minibar i{display:block;height:100%}
+.dA .content{padding:6px 28px 28px}
+.dA .tb-title{font-weight:650;font-size:15px;margin-left:4px;letter-spacing:-.01em}
+.dA .tb-sub{color:var(--ink3);font-size:12px;margin-left:2px}
+.dA .spacer{flex:1}
+/* A overview */
+.dA .ov{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:34px}
+.dA .eyebrow{font-size:12px;color:var(--ink2);font-weight:520;margin:6px 0 4px}
+.dA .hero{font-family:var(--f-round);font-size:54px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.dA .hero small{font-size:20px;font-weight:600;color:var(--ink2);letter-spacing:-.01em;margin-left:6px}
+.dA .lede{font-size:15px;line-height:1.5;color:var(--ink2);margin:12px 0 20px;max-width:58ch}
+.dA .lede b{color:var(--ink);font-weight:600}
+.dA .capbar{height:30px;border-radius:10px;display:flex;overflow:hidden;gap:2px}
+.dA .capbar i{display:block;height:100%;transition:filter .15s ease}
+.dA .capbar i:hover{filter:brightness(1.06)}
+.dA .capbar .free{background:repeating-linear-gradient(135deg,var(--light) 0 6px,color-mix(in oklch,var(--light) 70%,white) 6px 12px);box-shadow:0 0 22px 2px color-mix(in oklch,var(--light) 60%,transparent)}
+.dA .legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:12px 0 30px}
+.dA .legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)}
+.dA .legend b{color:var(--ink);font-weight:600}
+.dA .sect-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.dA .sect-h h3{font-size:15px;font-weight:650;letter-spacing:-.01em}
+.dA .ladder{border-top:1px solid var(--hair)}
+.dA .rung{width:100%;text-align:left;display:grid;grid-template-columns:22px minmax(0,1fr) 110px 90px 16px;gap:14px;align-items:center;padding:14px 8px;margin:0 -8px;width:calc(100% + 16px);border-bottom:1px solid var(--hair);border-radius:12px;transition:background-color .15s ease,transform .16s var(--ease-out)}
+.dA .rung:hover{background:var(--fill)}
+.dA .rung:active{transform:scale(.995)}
+.dA .rung .chev{color:var(--ink3)}
+.dA .rung .step{width:22px;height:22px;border-radius:11px;display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--win)}
+.dA .rung h4{font-size:13.5px;font-weight:620;display:flex;gap:8px;align-items:center}
+.dA .rung p{color:var(--ink2);font-size:12.5px;line-height:1.45;margin-top:2px}
+.dA .rung .sz{font-family:var(--f-round);font-size:22px;font-weight:650;text-align:right;letter-spacing:-.01em}
+.dA .rung .after{text-align:right;font-size:11.5px;color:var(--ink2);line-height:1.35}
+.dA .rung .after b{display:block;color:var(--ink);font-size:13px;font-weight:600}
+.dA .vol{padding:14px;border-radius:16px;background:var(--raise);box-shadow:0 0 0 .5px var(--hair2),0 8px 20px -16px var(--shadow);margin-bottom:10px}
+.dA .vol-h{display:flex;gap:10px;align-items:center}
+.dA .vol-h .ico{width:22px;height:22px;color:var(--ink2)}
+.dA .vol-h b{font-weight:620;display:block}
+.dA .vol-h small{color:var(--ink2);font-size:11.5px}
+.dA .vol .bar{height:6px;border-radius:3px;background:var(--hair2);margin:12px 0 6px;overflow:hidden}
+.dA .vol .bar i{display:block;height:100%;background:var(--ink)}
+.dA .vol .row{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink2)}
+.dA .vol .row b{color:var(--review);font-weight:600}
+.dA .vol.dim{background:none;box-shadow:inset 0 0 0 1px var(--hair2)}
+.dA .vol .acts{margin-top:12px;display:flex;gap:6px}
+.dA .note{font-size:12px;color:var(--ink2);line-height:1.5;padding:4px 2px}
+/* A scan */
+.dA .scan-top{display:flex;align-items:flex-end;justify-content:space-between;margin:8px 0 18px}
+.dA .scan-bar{height:12px;border-radius:6px;background:var(--hair2);overflow:hidden;position:relative}
+.dA .scan-bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,color-mix(in oklch,var(--light) 55%,transparent),var(--light));border-radius:6px;box-shadow:0 0 18px color-mix(in oklch,var(--light) 70%,transparent)}
+.dA .counters{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:22px 0 26px;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
+.dA .counters div{padding:14px 0 14px 16px;border-left:1px solid var(--hair)}
+.dA .counters div:first-child{border-left:0;padding-left:0}
+.dA .counters small{display:block;font-size:11.5px;color:var(--ink2);margin-bottom:3px}
+.dA .counters b{font-family:var(--f-round);font-size:26px;font-weight:650;letter-spacing:-.02em}
+.dA .reading{display:flex;gap:8px;align-items:center;color:var(--ink2);margin-top:10px;min-height:18px}
+.dA .feed{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.dA .feed-row{display:grid;grid-template-columns:10px minmax(0,1fr) auto 64px;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--hair);animation:feedin .35s var(--ease-out) both}
+@keyframes feedin{from{opacity:0;transform:translateY(-4px)}}
+.dA .feed-row .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dA .feed-row .nm small{display:block;color:var(--ink3);font-family:var(--f-mono);font-size:10.5px;overflow:hidden;text-overflow:ellipsis}
+.dA .feed-row .s{text-align:right;font-weight:600}
+.dA .found{display:flex;gap:28px;align-items:baseline;margin:0 0 14px}
+.dA .found b{font-family:var(--f-round);font-size:18px;font-weight:650}
+/* A explore */
+.dA .crumbs{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+.dA .crumbs button{padding:4px 8px;border-radius:8px;font-weight:560;color:var(--ink2)}
+.dA .crumbs button:last-child{color:var(--ink);background:var(--fill)}
+.dA .crumbs .ico{width:12px;height:12px;color:var(--ink3)}
+.dA .tm-cell{border-radius:10px;color:var(--c-ink)}
+.dA .tm-sub{box-shadow:inset 0 0 0 .5px rgba(0,0,0,.06)}
+.dA .tm-cell.locked{background-image:repeating-linear-gradient(135deg,transparent 0 7px,rgba(0,0,0,.06) 7px 9px)}
+.dA .ex-head{display:flex;justify-content:space-between;align-items:center;margin:4px 0 12px}
+.dA .ex-head h2{font-family:var(--f-round);font-size:24px;font-weight:700;letter-spacing:-.02em}
+.dA .ex-head h2 small{font-size:14px;color:var(--ink2);font-weight:600;margin-left:6px}
+.dA .list{margin-top:18px;border-top:1px solid var(--hair)}
+.dA .li{display:grid;grid-template-columns:12px minmax(0,1.3fr) minmax(0,1fr) 72px 104px 92px;gap:12px;align-items:center;height:38px;padding:0 6px;border-bottom:1px solid var(--hair);border-radius:0;transition:background-color .12s ease}
+.dA .li:hover{background:var(--fill)}
+.dA .li .nm{font-weight:540;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:6px;align-items:center}
+.dA .li .nm .ico{color:var(--ink3);width:14px;height:14px}
+.dA .li .track{height:5px;border-radius:3px;background:var(--hair)}
+.dA .li .track i{display:block;height:100%;border-radius:3px}
+.dA .li .s{text-align:right;font-weight:600}
+.dA .li .act{opacity:0;transition:opacity .12s ease;justify-self:end}
+.dA .li:hover .act{opacity:1}
+/* A cleanup */
+.dA .q-head{display:flex;justify-content:space-between;align-items:flex-end;margin:8px 0 16px}
+.dA .q-head h2{font-size:24px;font-weight:700;letter-spacing:-.02em;font-family:var(--f-round)}
+.dA .q-head p{color:var(--ink2);margin-top:4px}
+.dA .grp{margin-bottom:18px}
+.dA .grp-h{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--hair2)}
+.dA .grp-h h4{font-size:13px;font-weight:650}
+.dA .grp-h span{margin-left:auto;font-weight:600}
+.dA .qi{display:grid;grid-template-columns:17px minmax(0,1fr) 112px 72px;gap:14px;align-items:start;padding:11px 0;border-bottom:1px solid var(--hair)}
+.dA .qi .nm{font-weight:580;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dA .qi .why{color:var(--ink2);font-size:12.5px;line-height:1.45;margin-top:3px;max-width:62ch}
+.dA .qi .pth{color:var(--ink3);margin-top:3px}
+.dA .qi .s{text-align:right;font-weight:620;font-family:var(--f-round);font-size:15px}
+.dA .qi .meth{font-size:11.5px;color:var(--ink2);text-align:right;padding-top:2px}
+.dA .bychip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--fill);color:var(--ink2)}
+.dA .actionbar,.dC .qbar{position:sticky;bottom:0;margin:14px -6px 0;padding:10px 10px 10px 18px;display:flex;align-items:center;gap:14px;border-radius:22px;background:color-mix(in srgb,var(--win) 90%,transparent);
+  -webkit-backdrop-filter:blur(24px) saturate(1.8);backdrop-filter:blur(24px) saturate(1.8);box-shadow:inset 0 .5px 0 var(--spec),inset 0 0 0 .5px var(--glass-edge),0 12px 30px -14px var(--shadow)}
+.dA .actionbar .tot{font-family:var(--f-round);font-size:20px;font-weight:700}
+/* A assistant inspector */
+.dA .insp{position:absolute;top:8px;right:8px;bottom:8px;width:392px;border-radius:19px;z-index:6;background:var(--glass);-webkit-backdrop-filter:blur(30px) saturate(1.7);backdrop-filter:blur(30px) saturate(1.7);
+  box-shadow:inset 0 .5px 0 var(--spec),inset 0 0 0 .5px var(--glass-edge),0 20px 50px -20px var(--shadow);display:flex;flex-direction:column;animation:insp .3s var(--ease-out) both}
+@keyframes insp{from{opacity:0;transform:translateX(16px)}}
+.dA .insp-h{display:flex;align-items:center;gap:10px;padding:14px 14px 10px 18px}
+.dA .insp-h b{font-weight:650;font-size:14px}
+.dA .insp-h small{display:block;color:var(--ink2);font-size:11px}
+.dA .insp-b{flex:1;overflow:auto;padding:4px 18px 10px}
+.dA .insp-b::-webkit-scrollbar{width:0}
+.dA .insp-f{padding:10px 14px 14px}
+.dA .msg-u{margin:10px 0 12px auto;max-width:86%;padding:9px 13px;border-radius:16px 16px 5px 16px;background:var(--accent);color:var(--accent-ink);line-height:1.45;width:fit-content}
+.dA .msg-a{margin:8px 0 6px;line-height:1.55;font-size:13px}
+.dA .msg-a p+p{margin-top:8px}
+.dA .dimmed{opacity:.45;pointer-events:none;filter:saturate(.7)}
+
+/* ================= Direction B: Core Sample ================= */
+.dB{--win:#121315;--raise:#1B1C1F;--panel:#17181B;--ink:#E9E7E2;--ink2:#A09D97;--ink3:#6C6A66;--hair:rgba(233,231,226,.07);--hair2:rgba(233,231,226,.12);--fill:rgba(233,231,226,.06);
+  --glass:rgba(30,31,34,.62);--glass-edge:rgba(255,255,255,.08);--spec:rgba(255,255,255,.1);--cap:rgba(46,47,51,.72);--shadow:rgba(0,0,0,.7);--edge:rgba(255,255,255,.09);
+  --accent:#E8743B;--accent-ink:#140C07;--safe:#7BC59A;--review:#F0C24B;--keep:#8C929B;--toast:#E9E7E2;--toast-ink:#121315;--veil:rgba(10,10,12,.6);--sheet:#1E1F23;
+  --c-proj:#C79A5B;--c-dev:#6FAE8E;--c-apps:#6E94C9;--c-appdata:#B0807A;--c-media:#C9739B;--c-caches:#9FB45A;--c-dl:#5FB0B7;--c-sys:#5B5E63;--c-other:#3E4146;--c-ink:#101113}
+body:not(.dark) .dB{--win:#F2F1EE;--raise:#FFFFFF;--panel:#EAE9E5;--ink:#16171A;--ink2:#5D5F64;--ink3:#8D8F94;--hair:rgba(22,23,26,.08);--hair2:rgba(22,23,26,.13);--fill:rgba(22,23,26,.05);
+  --glass:rgba(236,235,231,.66);--glass-edge:rgba(255,255,255,.7);--spec:rgba(255,255,255,.9);--cap:rgba(255,255,255,.75);--shadow:rgba(30,30,35,.3);--edge:rgba(0,0,0,.14);
+  --accent:#C9541C;--accent-ink:#FFF6F0;--safe:#2D8653;--review:#9A6A0C;--keep:#6C727B;--toast:#16171A;--toast-ink:#F2F1EE;--veil:rgba(242,241,238,.55);--sheet:#FFFFFF;
+  --c-proj:#D6AE72;--c-dev:#86C0A2;--c-apps:#8EAEDB;--c-appdata:#C99A94;--c-media:#DD94B5;--c-caches:#B6C978;--c-dl:#84C6CC;--c-sys:#B7B9BD;--c-other:#D3D4D7;--c-ink:#16171A}
+.wall-B{background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 26px),linear-gradient(180deg,#2A2C30,#151618)}
+body:not(.dark) .wall-B{background:repeating-linear-gradient(0deg,rgba(0,0,0,.03) 0 1px,transparent 1px 26px),linear-gradient(180deg,#D9D8D3,#C7C6C1)}
+.dB{font-size:12px}
+.dB .side{width:204px;padding:50px 8px 8px;font-size:12px}
+.dB .main{left:218px}
+.dB .nav-h{font-size:10.5px;font-weight:600;color:var(--ink3);padding:12px 8px 4px;text-transform:uppercase;letter-spacing:.06em}
+.dB .nav{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:7px;color:var(--ink);font-weight:500}
+.dB .nav .ico{width:14px;height:14px;color:var(--ink2)}
+.dB .nav kbd{margin-left:auto;font-family:var(--f-mono);font-size:10px;color:var(--ink3)}
+.dB .nav[aria-current=true]{background:var(--fill);box-shadow:inset 0 0 0 .5px var(--hair2)}
+.dB .nav .meta{margin-left:auto;font-family:var(--f-mono);font-size:10.5px;color:var(--ink2)}
+.dB .nav .meta.low{color:var(--accent)}
+.dB .tb{height:50px;gap:6px}
+.dB .tb .cap{height:28px;border-radius:9px;font-size:12px}
+.dB .pathfield{flex:1;height:28px;border-radius:9px;background:var(--fill);box-shadow:inset 0 0 0 .5px var(--hair2);display:flex;align-items:center;gap:4px;padding:0 10px;font-family:var(--f-mono);font-size:11.5px;color:var(--ink2);overflow:hidden;white-space:nowrap}
+.dB .pathfield button{color:var(--ink);padding:2px 3px;border-radius:4px}
+.dB .pathfield button:hover{background:var(--fill)}
+.dB .pathfield i{color:var(--ink3);font-style:normal}
+.dB .content{padding:4px 18px 40px}
+.dB .status{position:absolute;left:218px;right:0;bottom:0;height:26px;display:flex;align-items:center;gap:16px;padding:0 18px;font-family:var(--f-mono);font-size:10.5px;color:var(--ink3);border-top:1px solid var(--hair);background:var(--win);z-index:2}
+.dB .status .ok{color:var(--safe)}
+.dB .status .sp{flex:1}
+.dB h2{font-size:15px;font-weight:650;letter-spacing:-.01em}
+.dB .sh{display:flex;align-items:baseline;gap:10px;margin:16px 0 8px}
+.dB .sh small{color:var(--ink3);font-family:var(--f-mono);font-size:10.5px}
+.dB .sh .r{margin-left:auto}
+.dB .n{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+/* core bar */
+.dB .core{position:relative;height:58px;display:flex;border-radius:6px;overflow:hidden;gap:1px;background:var(--hair)}
+.dB .core i{position:relative;display:block;height:100%;font-style:normal;color:var(--c-ink);font-size:10.5px;font-weight:600;padding:6px 6px;white-space:nowrap;overflow:hidden;line-height:1.3}
+.dB .core i span{display:block;font-family:var(--f-mono);font-weight:500;opacity:.75}
+.dB .core .free{background:repeating-linear-gradient(90deg,var(--accent) 0 2px,transparent 2px 5px);color:var(--accent)}
+.dB .axis{position:relative;height:18px;font-family:var(--f-mono);font-size:9.5px;color:var(--ink3)}
+.dB .axis span{position:absolute;top:4px;transform:translateX(-50%)}
+.dB .axis span::before{content:"";position:absolute;left:50%;top:-5px;width:1px;height:4px;background:var(--ink3)}
+.dB .grid2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:22px}
+.dB table{width:100%;border-collapse:collapse}
+.dB th{font-size:10.5px;font-weight:600;color:var(--ink3);text-align:left;padding:5px 8px;border-bottom:1px solid var(--hair2);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.dB td{padding:6px 8px;border-bottom:1px solid var(--hair);white-space:nowrap;vertical-align:middle}
+.dB td.r,.dB th.r{text-align:right}
+.dB td>button{display:inline-flex;align-items:center;gap:6px}
+.dB td .ico{width:13px;height:13px;vertical-align:-2px;color:var(--ink2)}
+.dB .risk .ico{color:inherit;width:11px;height:11px}
+.dB tr.hov:hover td{background:var(--fill)}
+.dB tr.sel td{background:color-mix(in oklch,var(--accent) 5%,transparent)}
+.dB .pth{font-family:var(--f-mono);font-size:11px;color:var(--ink2);max-width:290px;overflow:hidden;text-overflow:ellipsis}
+.dB .tag{font-family:var(--f-mono);font-size:10px;color:var(--ink3)}
+.dB .bigfig{font-family:var(--f-mono);font-size:22px;font-weight:500;letter-spacing:-.03em}
+.dB .ladder td{padding:9px 8px}
+.dB .glyph{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:4px;font-family:var(--f-mono);font-size:10px;font-weight:700;color:var(--win)}
+.dB .risk{border-radius:4px;font-family:var(--f-mono);font-size:10px;padding:1px 6px 1px 4px;font-weight:600}
+.dB .btn{height:28px;border-radius:8px;font-size:12px;padding:0 12px}
+.dB .kbd{font-family:var(--f-mono);font-size:10px;padding:1px 5px;border-radius:4px;box-shadow:inset 0 0 0 1px var(--hair2);color:var(--ink3)}
+/* B scan */
+.dB .meters{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--hair2);border-radius:8px;overflow:hidden;margin-top:6px}
+.dB .meters div{padding:10px 12px;border-left:1px solid var(--hair)}
+.dB .meters div:first-child{border-left:0}
+.dB .meters small{display:block;font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.dB .meters b{font-family:var(--f-mono);font-size:19px;font-weight:500;letter-spacing:-.03em}
+.dB .roots{margin-top:14px;display:grid;gap:5px}
+.dB .root{display:grid;grid-template-columns:150px minmax(0,1fr) 82px 60px;gap:10px;align-items:center;font-size:11.5px}
+.dB .root .t{height:8px;border-radius:2px;background:var(--fill);overflow:hidden}
+.dB .root .t i{display:block;height:100%;background:var(--ink2)}
+.dB .root.done .t i{background:var(--safe)}
+.dB .root .st{font-family:var(--f-mono);font-size:10.5px;color:var(--ink3);text-align:right}
+.dB .root.done .st{color:var(--safe)}
+.dB .log{margin-top:6px;border:1px solid var(--hair2);border-radius:8px;overflow:hidden}
+.dB .log .row-in{animation:feedin .3s var(--ease-out) both}
+/* B explore: icicle */
+.dB .ice{position:relative;height:176px;margin-top:6px;border-radius:6px;overflow:hidden}
+.dB .ice-c{position:absolute;overflow:hidden;color:var(--c-ink);font-size:11px;font-weight:600;padding:5px 7px;white-space:nowrap;cursor:pointer;box-shadow:inset -1px -1px 0 var(--win);transition:filter .12s ease}
+.dB .ice-c:hover{filter:brightness(1.1)}
+.dB .ice-c span{font-family:var(--f-mono);font-weight:500;opacity:.75;margin-left:6px;font-size:10px}
+.dB .ice-c.focus{background:var(--raise)!important;color:var(--ink);box-shadow:inset 0 0 0 1px var(--hair2)}
+.dB .ice-c.locked{background-image:repeating-linear-gradient(135deg,transparent 0 6px,rgba(0,0,0,.15) 6px 8px)}
+.dB .pct{display:inline-block;width:60px;height:4px;border-radius:2px;background:var(--fill);vertical-align:middle;margin-right:6px;overflow:hidden}
+.dB .pct i{display:block;height:100%}
+.dB .rowbtn{opacity:0;font-size:11px;color:var(--accent);font-weight:600}
+.dB tr:hover .rowbtn{opacity:1}
+/* B cleanup */
+.dB .qgrid{display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:18px}
+.dB .grp-row td{background:var(--panel);font-weight:650;font-size:11.5px}
+.dB .why{font-size:11px;color:var(--ink3);white-space:normal;max-width:380px;line-height:1.4;margin-top:2px}
+.dB .summary{position:sticky;top:0;border:1px solid var(--hair2);border-radius:10px;padding:14px;background:var(--panel)}
+.dB .summary .line{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--hair);font-size:11.5px}
+.dB .cmd{margin-top:12px;padding:10px;border-radius:7px;background:var(--win);font-family:var(--f-mono);font-size:10.5px;line-height:1.6;color:var(--ink2);white-space:pre-wrap;word-break:break-all;box-shadow:inset 0 0 0 1px var(--hair)}
+.dB .cmd b{color:var(--ink);font-weight:500}
+/* B assistant */
+.dB .agrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;height:calc(760px - 50px - 26px - 20px)}
+.dB .chat{display:flex;flex-direction:column;min-height:0}
+.dB .chat-b{flex:1;overflow:auto;padding-right:6px}
+.dB .chat-b::-webkit-scrollbar{width:0}
+.dB .m{display:grid;grid-template-columns:62px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--hair)}
+.dB .m .who{font-family:var(--f-mono);font-size:10.5px;color:var(--ink3);padding-top:2px}
+.dB .m .who.ai{color:var(--accent)}
+.dB .m .body{line-height:1.55;font-size:12.5px}
+.dB .m .body p+p{margin-top:6px}
+.dB .trace{border:1px solid var(--hair2);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.dB .trace-h{padding:9px 12px;font-size:10.5px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--hair);display:flex;justify-content:space-between}
+.dB .trace-b{overflow:auto;flex:1}
+.dB .tr{padding:8px 12px;border-bottom:1px solid var(--hair);font-family:var(--f-mono);font-size:10.5px;line-height:1.5;color:var(--ink2)}
+.dB .tr b{color:var(--ink);font-weight:500}
+.dB .tr .ms{float:right;color:var(--ink3)}
+.dB .tr.rej b{color:var(--review)}
+.dB .prop{border-radius:8px;box-shadow:inset 0 0 0 1px var(--hair2);background:var(--panel)}
+.dB .chip-btn{border-radius:6px;height:24px}
+.dB .composer{border-radius:9px}
+.dB .tool{border-radius:4px;font-family:var(--f-mono);font-size:10px}
+.dB .tool code{font-size:10px}
+
+/* ================= Direction C: Companion ================= */
+.dC{--win:#F1F2EC;--raise:#FBFBF7;--ink:#1A231F;--ink2:#55605A;--ink3:#87908A;--hair:rgba(26,35,31,.08);--hair2:rgba(26,35,31,.12);--fill:rgba(26,35,31,.055);
+  --glass:rgba(248,249,244,.64);--glass-edge:rgba(255,255,255,.75);--spec:rgba(255,255,255,.95);--cap:rgba(255,255,255,.7);--shadow:rgba(40,55,45,.3);--edge:rgba(0,0,0,.13);
+  --accent:#2D6A4F;--accent-ink:#F4F7F2;--safe:#2D7D52;--review:#B8651B;--keep:#6E7570;--toast:#1A231F;--toast-ink:#F1F2EC;--veil:rgba(241,242,236,.55);--sheet:#FBFBF7;
+  --c-proj:#4A78B5;--c-dev:#2F8A78;--c-apps:#D18D42;--c-appdata:#B5654C;--c-media:#C35F7E;--c-caches:#8DA64C;--c-dl:#4FA1C4;--c-sys:#959A92;--c-other:#C6CAC0;--c-ink:#FBFBF7}
+body.dark .dC{--win:#151916;--raise:#1E2420;--ink:#E7ECE6;--ink2:#A4AEA7;--ink3:#6F7A73;--hair:rgba(231,236,230,.08);--hair2:rgba(231,236,230,.12);--fill:rgba(231,236,230,.065);
+  --glass:rgba(34,40,36,.62);--glass-edge:rgba(255,255,255,.09);--spec:rgba(255,255,255,.12);--cap:rgba(52,60,55,.66);--shadow:rgba(0,0,0,.65);--edge:rgba(255,255,255,.09);
+  --accent:#7CC39C;--accent-ink:#0F1A14;--safe:#7CC39C;--review:#E39A55;--keep:#97A09A;--toast:#E7ECE6;--toast-ink:#151916;--veil:rgba(12,15,13,.6);--sheet:#20261F;
+  --c-proj:#6C9AD6;--c-dev:#4FB09C;--c-apps:#E0A35E;--c-appdata:#CF7E64;--c-media:#D97C99;--c-caches:#A8C066;--c-dl:#6BBAD9;--c-sys:#7A807A;--c-other:#4B524C;--c-ink:#101512}
+.wall-C{background:radial-gradient(1200px 500px at 20% 0%,rgba(255,255,255,.5),transparent 60%),linear-gradient(160deg,#E2E7DA,#CAD5C8)}
+body.dark .wall-C{background:radial-gradient(1000px 500px at 20% 0%,rgba(124,195,156,.08),transparent 60%),linear-gradient(160deg,#1F2721,#111512)}
+.dC .rail{position:absolute;left:8px;top:8px;bottom:8px;width:400px;border-radius:19px;background:var(--glass);-webkit-backdrop-filter:blur(28px) saturate(1.7);backdrop-filter:blur(28px) saturate(1.7);
+  box-shadow:inset 0 .5px 0 var(--spec),inset 0 0 0 .5px var(--glass-edge),0 10px 30px -18px var(--shadow);z-index:3;display:flex;flex-direction:column;transition:width .32s var(--ease-io)}
+.dC.wide .rail{width:760px}
+.dC .main{left:416px;transition:left .32s var(--ease-io)}
+.dC.wide .main{left:776px}
+.dC .rail-h{height:54px;flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 12px 0 90px}
+.dC .rail-h .who{margin-right:auto;display:flex;align-items:center;gap:8px;font-weight:620}
+.dC .mark{width:22px;height:22px;border-radius:7px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink)}
+.dC .mark .ico{width:14px;height:14px;stroke-width:2}
+.dC .rail-b{flex:1;overflow:auto;padding:6px 22px 10px}
+.dC .rail-b::-webkit-scrollbar{width:0}
+.dC.wide .rail-b{padding:6px 80px 10px}
+.dC .rail-f{padding:10px 16px 16px}
+.dC.wide .rail-f{padding:10px 74px 18px}
+.dC .voice{font-family:var(--f-serif);font-size:15.5px;line-height:1.55;letter-spacing:-.003em}
+.dC .voice p+p{margin-top:10px}
+.dC .voice b{font-weight:650}
+.dC .voice .big{font-size:26px;line-height:1.2;letter-spacing:-.015em;font-weight:500;margin-bottom:12px}
+.dC .msg-u{margin:16px 0 14px auto;max-width:84%;padding:10px 14px;border-radius:18px 18px 6px 18px;background:var(--fill);line-height:1.45;width:fit-content;font-size:13px}
+.dC .msg-a{margin:6px 0 10px}
+.dC .tool{background:transparent;box-shadow:inset 0 0 0 1px var(--hair2);font-family:var(--f-ui);font-size:11px;letter-spacing:0}
+.dC .prop{border-radius:16px}
+.dC .prop-h b{font-family:var(--f-serif);font-size:15px;font-weight:600}
+.dC .tb .segc{display:inline-flex;padding:3px;border-radius:17px;background:var(--cap);box-shadow:inset 0 .5px 0 var(--spec),0 0 0 .5px var(--hair2),0 3px 10px -4px var(--shadow)}
+.dC .segc button{height:26px;padding:0 13px;border-radius:13px;font-weight:560;color:var(--ink2);transition:background-color .18s ease,color .18s ease}
+.dC .segc button[aria-pressed=true]{background:var(--raise);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.dC .content{padding:4px 30px 30px}
+.dC h2{font-family:var(--f-serif);font-size:26px;font-weight:500;letter-spacing:-.015em}
+.dC .sub{color:var(--ink2);margin:4px 0 18px;line-height:1.5;max-width:64ch}
+.dC .waffle{display:grid;gap:4px;width:fit-content}
+.dC .waffle i{width:15px;height:15px;border-radius:4px;display:block;transition:opacity .22s ease,transform .22s var(--ease-out),box-shadow .2s ease}
+.dC .waffle i.free{box-shadow:inset 0 0 0 1.5px var(--ink3);background:transparent}
+.dC .waffle i.empty{background:var(--fill)}
+.dC .waffle.hi i:not(.safe):not(.free){opacity:.18}
+.dC .waffle i.safe{position:relative}
+.dC .waffle.hi i.safe{box-shadow:0 0 0 2px var(--win),0 0 0 3.5px var(--safe)}
+.dC .waffle.grp-hover i:not(.on){opacity:.25}
+.dC .wlegend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 18px;margin-top:14px}
+.dC .wlegend div{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--hair);font-size:12.5px}
+.dC .wlegend b{margin-left:auto;font-weight:600}
+.dC .ov-row{display:flex;gap:28px;align-items:flex-start}
+.dC .facts{flex:1;min-width:0}
+.dC .fact{padding:12px 0;border-bottom:1px solid var(--hair)}
+.dC .fact small{display:block;color:var(--ink2);font-size:12px}
+.dC .fact b{font-family:var(--f-serif);font-size:28px;font-weight:500;letter-spacing:-.02em}
+.dC .fact b.safe{color:var(--safe)}
+.dC .toggle{display:inline-flex;align-items:center;gap:8px;font-weight:560;color:var(--ink2);margin-top:14px}
+.dC .sw{width:30px;height:18px;border-radius:9px;background:var(--hair2);position:relative;transition:background-color .2s ease}
+.dC .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:7px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .2s var(--ease-out)}
+.dC .sw.on{background:var(--safe)}.dC .sw.on::after{transform:translateX(12px)}
+.dC .vols{display:flex;gap:10px;margin-top:16px}
+.dC .volc{flex:1;padding:11px 13px;border-radius:14px;box-shadow:inset 0 0 0 1px var(--hair2);display:flex;gap:10px;align-items:center}
+.dC .volc .ico{width:20px;height:20px;color:var(--ink2)}
+.dC .volc b{display:block;font-weight:600}
+.dC .volc small{color:var(--ink2);font-size:11.5px}
+.dC .counters{display:flex;gap:30px;margin:16px 0 18px}
+.dC .counters small{display:block;color:var(--ink2);font-size:11.5px}
+.dC .counters b{font-family:var(--f-serif);font-size:24px;font-weight:500}
+.dC .crumbs{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-bottom:6px;color:var(--ink2)}
+.dC .crumbs button{padding:3px 8px;border-radius:8px;font-weight:560;color:var(--ink2)}
+.dC .crumbs button:last-child{color:var(--ink);background:var(--fill)}
+.dC .crumbs .ico{width:12px;height:12px;color:var(--ink3)}
+.dC .unit{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)}
+.dC .unit i{width:12px;height:12px;border-radius:3px;background:var(--ink3);display:inline-block}
+.dC .blocks{display:flex;flex-wrap:wrap;gap:22px 26px;align-items:flex-start;margin-top:6px}
+.dC .blk{display:flex;flex-direction:column;gap:7px;transition:opacity .18s ease}
+.dC .blocks:hover .blk{opacity:.45}.dC .blocks .blk:hover{opacity:1}
+.dC .blk-t{display:grid;gap:3px}
+.dC .blk-t i{width:14px;height:14px;border-radius:4px;display:block}
+.dC .blk-l{display:flex;align-items:baseline;gap:6px;font-size:12px;line-height:1.3;flex-wrap:wrap}
+.dC .blk-l b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dC .blk-l span{color:var(--ink2)}
+.dC .rdot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none;align-self:center}
+.dC .rkey{display:flex;gap:16px;margin-top:22px;font-size:12px;color:var(--ink2)}
+.dC .rkey span{display:inline-flex;align-items:center;gap:6px}
+.dC .glist{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:0 26px}
+.dC .gl{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--hair);cursor:pointer}
+.dC .gl .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:540}
+.dC .gl .s{font-weight:600}
+.dC .gl:hover .nm{text-decoration:underline;text-underline-offset:3px}
+.dC .qi{display:grid;grid-template-columns:17px minmax(0,1fr) 70px;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair);align-items:start}
+.dC .qi .nm{font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dC .qi .why{font-family:var(--f-serif);font-style:italic;color:var(--ink2);font-size:13.5px;line-height:1.45;margin-top:3px}
+.dC .qi .s{text-align:right;font-weight:600}
+.dC .grp-h{display:flex;align-items:center;gap:10px;margin:18px 0 2px}
+.dC .grp-h h4{font-family:var(--f-serif);font-size:17px;font-weight:600}
+.dC .grp-h span{margin-left:auto;font-weight:600;color:var(--ink2)}
+
+.dC .qbar .tot{font-family:var(--f-serif);font-size:22px}
+.dC .tray{padding-top:8px}
+.dC .tray h3{font-family:var(--f-serif);font-size:20px;font-weight:500;margin-bottom:4px}
+.dC .tray .tot{font-family:var(--f-serif);font-size:34px;letter-spacing:-.02em;margin:10px 0 2px}
+.dC .tray li{list-style:none;display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--hair);font-size:12.5px}
+.dC .tray li span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dC .bychip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:999px;background:color-mix(in oklch,var(--accent) 14%,transparent);color:var(--accent)}
+.dC .live{display:flex;gap:8px;align-items:center;color:var(--ink2);font-size:12px;margin:2px 0 10px}
+.dC .pulse{width:8px;height:8px;border-radius:4px;background:var(--safe);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+body.still *,body.still *::before,body.still *::after{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){
+  .screen,.feed-row,.row-in,.insp,.sheet,.toast{animation:fade .2s ease both!important}
+  .dC .rail,.dC .main{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="deck">
+  <header class="deck-top">
+    <div class="brand"><b>Lightwell</b><span id="brandsub"></span></div>
+    <nav class="tabs" id="tabs"></nav>
+    <div class="toggles">
+      <div class="seg" id="themeSeg"></div>
+    </div>
+  </header>
+  <section class="dirdesc" id="dirdesc"></section>
+  <div class="stage-wrap"><div class="stage" id="stage"></div></div>
+  <div class="jump" id="jump"></div>
+  <footer class="deck-foot" id="foot"></footer>
+</div>
+<div id="tip"></div>
+
+<script>
+/* =============================== state + i18n =============================== */
+const S = {
+  dir: 'A', theme: 'light', screen: 'overview',
+  focus: { A: 'home', B: 'home', C: 'home' },
+  free: 18.0, sel: null, trashed: null, sheet: false, toast: null,
+  props: { p1: 'pending', p2: 'pending' }, added: new Set(),
+  scan: { p: 0, done: false, raf: 0, t0: 0 }, safeHi: false
+};
+const fmt = (gb, d = 1) => gb.toFixed(d) + ' GB';
+const fnum = n => Math.round(n).toLocaleString('en-US');
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+/* =============================== icons =============================== */
+const IP = {
+  disk: '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M7 14h4"/><circle cx="17" cy="12" r="1"/>',
+  net: '<rect x="4" y="5" width="16" height="10" rx="2"/><path d="M8 19h8M12 15v4"/>',
+  scan: '<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>',
+  map: '<rect x="3.5" y="3.5" width="8" height="10" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="6" rx="1.5"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5"/><rect x="3.5" y="15.5" width="8" height="5" rx="1.5"/>',
+  tray: '<path d="M4 13l2.5-7h11L20 13v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M4 13h5l1 2h4l1-2h5"/>',
+  chat: '<path d="M5 5h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-8l-4 4v-4H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/>',
+  home: '<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/>',
+  trash: '<path d="M5 7h14M10 7V5h4v2M7 7l1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"/>',
+  cr: '<path d="M9 6l6 6-6 6"/>', cl: '<path d="M15 6l-6 6 6 6"/>',
+  check: '<path d="M5 12.5l4.2 4L19 7"/>',
+  lock: '<rect x="6" y="11" width="12" height="9" rx="2"/><path d="M9 11V8a3 3 0 0 1 6 0v3"/>',
+  redo: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/>',
+  folder: '<path d="M3.5 7.5a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', stop: '<rect x="7" y="7" width="10" height="10" rx="2"/>',
+  up: '<path d="M12 19V5M6 11l6-6 6 6"/>', eye: '<path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/>',
+  ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  warn: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  shield: '<path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/>',
+  side: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M9 5v14"/>',
+  bolt: '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>', star: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>',
+  info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.5"/>', term: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M7.5 10l3 2.5-3 2.5M13 15h4"/>'
+};
+const I = (n, cls = '') => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${IP[n]}</svg>`;
+
+/* =============================== data =============================== */
+const CATS = ['proj', 'dev', 'apps', 'appdata', 'media', 'caches', 'dl', 'sys', 'other'];
+const catName = c => ({
+  proj: 'Projects', dev: 'Developer tools', apps: 'Apps',
+  appdata: 'App data', media: 'Photos & Messages', caches: 'Caches',
+  dl: 'Downloads', sys: 'System & hidden', other: 'Everything else'
+})[c];
+const catVar = c => `var(--c-${c})`;
+/* category view (sums to 442.0 used of 460) */
+const CATSUM = [
+  ['other', 88.9], ['apps', 79.0], ['dev', 72.1], ['appdata', 62.4], ['proj', 44.4], ['media', 38.8], ['sys', 28.7], ['caches', 16.2], ['dl', 11.5]
+];
+const TOTAL = 460, USED = 442.0;
+
+let NID = 0;
+function N(n, c, s, r, k) { return { id: 'n' + (NID++), n, c, s, r: r || null, k: (k || []).sort((a, b) => b.s - a.s) }; }
+const TREE = N('Macintosh HD', 'other', 442.0, null, [
+  N('you', 'other', 296.0, null, [
+    N('Library', 'other', 150.0, null, [
+      N('Application Support', 'appdata', 71.4, null, [
+        N('Autodesk', 'appdata', 22.4, 'review', [N('webdeploy build (current)', 'appdata', 11.2, 'review'), N('webdeploy build (previous)', 'appdata', 11.2, 'review')]),
+        N('Claude', 'appdata', 11.7, 'review', [N('vm_bundles', 'appdata', 10.1, 'review'), N('Other', 'appdata', 1.6)]),
+        N('Other apps', 'appdata', 15.7), N('Steam', 'appdata', 4.9, 'review'), N('Google', 'appdata', 4.2), N('Blackmagic Design', 'appdata', 3.9, 'review'),
+        N('Notion', 'appdata', 3.6), N('minecraft', 'appdata', 2.5, 'review'), N('Adobe', 'appdata', 2.5, 'review')]),
+      N('Developer', 'dev', 33.6, null, [N('DerivedData', 'dev', 15.0, 'safe'), N('CoreSimulator', 'dev', 12.1, 'review'), N('iOS DeviceSupport', 'dev', 6.5, 'safe')]),
+      N('Caches', 'caches', 16.2, 'safe', [N('com.spotify.client', 'caches', 8.4, 'safe'), N('Google', 'caches', 3.6, 'safe'), N('Other caches', 'caches', 2.7, 'safe'), N('CocoaPods', 'caches', 0.9, 'safe'), N('Adobe', 'caches', 0.6, 'safe')]),
+      N('Containers', 'appdata', 14.0, null, [N('Whisky', 'appdata', 3.9, 'review'), N('CoreDevice', 'appdata', 2.8, 'review'), N('Other', 'appdata', 7.3)]),
+      N('Other', 'other', 8.2), N('Messages', 'media', 6.6, 'keep')]),
+    N('Projects', 'proj', 44.4, 'review', [N('reel-editor', 'proj', 25.3, 'review'), N('atlas-ios', 'proj', 11.0, 'review'), N('portfolio-next', 'proj', 5.2, 'review'), N('9 more projects', 'proj', 2.9, 'review')]),
+    N('Pictures', 'media', 32.2, null, [N('Photos Library', 'media', 20.5, 'keep'), N('Lightroom', 'media', 11.7, 'review')]),
+    N('Documents', 'other', 14.2),
+    N('Downloads', 'dl', 11.5, 'review', [N('DaVinci_Resolve_21.dmg', 'dl', 7.9, 'review'), N('Other files', 'dl', 2.5), N('6 old installers', 'dl', 1.1, 'review')]),
+    N('.claude', 'dev', 10.1, 'review', [N('projects', 'dev', 3.6, 'review'), N('jobs', 'dev', 3.6, 'review'), N('plugins', 'dev', 1.2), N('skills', 'dev', 0.9), N('skills.backup', 'dev', 0.8, 'review')]),
+    N('Movies', 'media', 9.8), N('Applications', 'apps', 8.1), N('Other', 'other', 6.4),
+    N('.cache', 'dev', 5.7, 'safe', [N('uv', 'dev', 5.7, 'safe')]), N('.npm', 'dev', 3.6, 'safe')]),
+  N('Applications', 'apps', 79.0, null, [N('68 more apps', 'apps', 51.3), N('Xcode', 'apps', 3.9), N('Affinity', 'apps', 3.4), N('Microsoft Word', 'apps', 2.7), N('Microsoft Outlook', 'apps', 2.6),
+    N('Affinity Designer 2', 'apps', 2.5, 'review'), N('Microsoft Excel', 'apps', 2.5), N('Microsoft PowerPoint', 'apps', 2.2), N('OneDrive', 'apps', 1.4), N('Visual Studio Code', 'apps', 1.4),
+    N('VScode (second copy)', 'apps', 1.4, 'review'), N('Goodnotes', 'apps', 1.3), N('OneNote', 'apps', 1.3), N('Microsoft Teams', 'apps', 1.1)]),
+  N('Library', 'dev', 35.5, null, [N('Developer', 'dev', 19.1, 'review', [N('iOS 26.5 runtime', 'dev', 16.1, 'review'), N('dyld caches', 'dev', 3.0, 'safe')]),
+    N('Application Support', 'appdata', 10.9, null, [N('Adobe', 'appdata', 6.3, 'review'), N('Blackmagic Design', 'appdata', 4.6, 'review')]), N('Other', 'other', 5.5)]),
+  N('System & hidden', 'sys', 20.7, 'locked'), N('private/var', 'sys', 8.0, 'locked'), N('opt/homebrew', 'dev', 2.8)
+]);
+const BYID = {}; (function idx(n, p) { n.parent = p; BYID[n.id] = n; n.k.forEach(k => idx(k, n)); })(TREE, null);
+TREE.k[0].id = 'home'; BYID.home = TREE.k[0];
+const chainOf = n => { const a = []; while (n) { a.unshift(n); n = n.parent; } return a; };
+const pathOf = n => { const c = chainOf(n).slice(1).map(x => x.n); if (c[0] === 'you') { c[0] = '~'; return c.join('/'); } return '/' + c.join('/'); };
+const dispName = n => n.n === 'you' ? 'you (home)' : n.n === 'Other' ? 'Other' : n.n;
+
+/* cleanup items */
+const Q = [
+  { id: 'dd', g: 'build', n: 'Xcode DerivedData', p: '~/Library/Developer/Xcode/DerivedData', s: 15.0, r: 'safe', m: 'trash', rule: 'dev.derived_data',
+    why: () => 'Xcode rebuilds this on your next build. Lightwell asks Xcode to quit first.' },
+  { id: 'ds', g: 'build', n: 'iOS DeviceSupport', p: '~/Library/Developer/Xcode/iOS DeviceSupport', s: 6.5, r: 'safe', m: 'trash', rule: 'dev.device_support',
+    why: () => 'Copied again from your iPhone the next time you plug it in. The newest version stays.' },
+  { id: 'uv', g: 'build', n: 'uv package cache', p: '~/.cache/uv', s: 5.7, r: 'safe', m: 'trash', rule: 'pkg.uv_cache',
+    why: () => 'Python packages download again when a project needs them.' },
+  { id: 'npm', g: 'build', n: 'npm cache', p: '~/.npm/_cacache', s: 3.6, r: 'safe', m: 'trash', rule: 'pkg.npm_cache',
+    why: () => 'A download cache. Nothing in your projects points at it.' },
+  { id: 'brew', g: 'build', n: 'Homebrew old downloads', p: '~/Library/Caches/Homebrew', s: 0.3, r: 'safe', m: 'trash', rule: 'pkg.brew_cleanup',
+    why: () => 'Same result as brew cleanup.' },
+  { id: 'spot', g: 'cache', n: 'Spotify cache', p: '~/Library/Caches/com.spotify.client', s: 8.4, r: 'safe', m: 'trash', rule: 'cache.user_app',
+    why: () => 'Streamed songs download again. Tip: set a cache limit in Spotify so it stays small.' },
+  { id: 'goog', g: 'cache', n: 'Google cache', p: '~/Library/Caches/Google', s: 3.6, r: 'safe', m: 'trash', rule: 'cache.user_app',
+    why: () => 'Chrome rebuilds its cache. Your history, passwords and logins live elsewhere and stay.' },
+  { id: 'pods', g: 'cache', n: 'CocoaPods cache', p: '~/Library/Caches/CocoaPods', s: 0.9, r: 'safe', m: 'trash', rule: 'cache.user_app',
+    why: () => 'Pods download again on the next pod install.' },
+  { id: 'adobe', g: 'cache', n: 'Adobe cache', p: '~/Library/Caches/Adobe', s: 0.6, r: 'safe', m: 'trash', rule: 'cache.user_app',
+    why: () => 'Rebuilt by Adobe apps on launch.' },
+  { id: 'cmisc', g: 'cache', n: '14 smaller app caches', p: '~/Library/Caches', s: 0.5, r: 'safe', m: 'trash', rule: 'cache.user_app',
+    why: () => 'Apple caches that are in use (CloudKit, Safari) are left alone.' },
+  { id: 'nm', g: 'review', n: 'node_modules in 12 projects', p: '~/Projects/**/node_modules', s: 4.1, r: 'review', m: 'trash', rule: 'proj.node_modules', prop: 'p1',
+    why: () => 'The projects now live on your Mac Studio. npm install brings any of these back.' },
+  { id: 'dmg', g: 'review', n: '7 old installer disk images', p: '~/Downloads/*.dmg', s: 9.0, r: 'review', m: 'trash', rule: 'dl.old_installers', prop: 'p2',
+    why: () => 'All older than 30 days and the apps are installed. The DaVinci Resolve installer alone is 7.9 GB.' },
+  { id: 'simrt', g: 'review', n: 'iOS 26.5 Simulator runtime', p: '/Library/Developer/CoreSimulator', s: 19.1, r: 'review', m: 'simctl', rule: 'sim.runtime',
+    why: () => 'Removed with simctl, not the Trash. Xcode can download it again. Needs your admin password.' },
+  { id: 'simdev', g: 'review', n: '11 Simulator devices', p: '~/Library/Developer/CoreSimulator/Devices', s: 12.1, r: 'review', m: 'simctl', rule: 'sim.devices',
+    why: () => 'Holds test apps and their data. Pick devices one by one in the details.' },
+  { id: 'fusion', g: 'review', n: 'Autodesk Fusion', p: '~/Library/Application Support/Autodesk/webdeploy', s: 22.4, r: 'review', m: 'vendor', rule: 'vendor.autodesk_fusion',
+    why: () => 'Two full builds of 11.2 GB each. Use Autodesk’s own uninstaller; deleting one build by hand breaks Fusion.' },
+  { id: 'photos', g: 'keep', n: 'Photos Library', p: '~/Pictures/Photos Library.photoslibrary', s: 20.5, r: 'keep', m: 'app', rule: 'media.photos',
+    why: () => 'May be the only copy of your pictures. Turn on Optimize Mac Storage in Photos instead.' },
+  { id: 'msgs', g: 'keep', n: 'Messages attachments', p: '~/Library/Messages', s: 6.6, r: 'keep', m: 'app', rule: 'media.messages',
+    why: () => 'Manage in Messages, Settings, Keep Messages. Deleting files here corrupts the chat history.' }
+];
+const QBY = Object.fromEntries(Q.map(q => [q.id, q]));
+const SAFE_IDS = Q.filter(q => q.r === 'safe').map(q => q.id);
+S.sel = new Set(SAFE_IDS);
+const grpName = g => ({ build: 'Developer build files', cache: 'App caches', review: 'Worth a look', keep: 'Keep, or manage in their own app' })[g];
+const methName = m => ({ trash: 'To Trash', simctl: 'simctl', vendor: 'Vendor uninstaller', app: 'In its app' })[m];
+const checkable = q => q.m === 'trash' || q.m === 'simctl';
+const selTotal = () => [...S.sel].reduce((a, id) => a + QBY[id].s, 0);
+const riskLabel = r => ({ safe: 'Safe', review: 'Review', keep: 'Keep', locked: 'Locked' })[r];
+const riskIco = r => ({ safe: 'check', review: 'eye', keep: 'shield', locked: 'lock' })[r];
+const risk = r => r ? `<span class="risk r-${r}">${I(riskIco(r))}${riskLabel(r)}</span>` : '';
+
+const RECL = { safe: 45.1, review: 121.5, keep: 27.1 };
+
+/* scan stream */
+const FEED = [
+  ['~/Library/Developer/Xcode/DerivedData', 15.0, 'dev', 'safe', .08], ['~/Library/Caches/com.spotify.client', 8.4, 'caches', 'safe', .14],
+  ['~/Projects', 44.4, 'proj', 'review', .22], ['~/Library/Application Support/Autodesk', 22.4, 'appdata', 'review', .3],
+  ['~/Pictures/Photos Library.photoslibrary', 20.5, 'media', 'keep', .38], ['~/Library/Developer/CoreSimulator/Devices', 12.1, 'dev', 'review', .46],
+  ['~/Library/Application Support/Claude', 11.7, 'appdata', 'review', .53], ['~/Downloads', 11.5, 'dl', 'review', .6],
+  ['~/.claude', 10.1, 'dev', 'review', .66], ['~/Library/Developer/Xcode/iOS DeviceSupport', 6.5, 'dev', 'safe', .72],
+  ['~/Library/Messages', 6.6, 'media', 'keep', .78], ['~/.cache/uv', 5.7, 'dev', 'safe', .84], ['/Library/Developer/CoreSimulator', 19.1, 'dev', 'review', .92]
+];
+const READING = ['~/Library/Developer/CoreSimulator/Devices/4F1C…/data/Containers', '~/Projects/reel-editor/node_modules/.pnpm', '~/Library/Application Support/Autodesk/webdeploy/production',
+  '~/Pictures/Photos Library.photoslibrary (size only)', '~/Library/Caches/com.spotify.client/Storage', '/Applications/Xcode.app/Contents/Developer', '/Library/Developer/CoreSimulator/Volumes/iOS_23F77'];
+const ROOTS = [['/Users/you', 296.0, 0, .66], ['/Applications', 79.0, .66, .82], ['/Library', 35.5, .82, .92], ['/private/var', 8.0, .92, .96], ['/opt/homebrew', 2.8, .96, .985], ['/System, hidden', 20.7, .985, 1]];
+const FINAL = { files: 2148903, dirs: 412377, gb: 442.0, sec: 72 };
+const ease = t => 1 - Math.pow(1 - t, 2.2);
+
+/* =============================== shared bits =============================== */
+const SCREENS = ['overview', 'scan', 'explore', 'cleanup', 'assistant'];
+const scrName = s => ({ overview: 'Overview', scan: 'Scan', explore: 'Explore', cleanup: 'Review queue', assistant: 'Assistant' })[s];
+const scrIco = { overview: 'home', scan: 'scan', explore: 'map', cleanup: 'tray', assistant: 'chat' };
+const lights = () => `<div class="lights"><i></i><i></i><i></i></div>`;
+const freeNow = () => S.free;
+
+function chatData() {
+  return [
+    { u: 'My disk is almost full. My coding projects live on the Mac Studio now. What can I safely get rid of?' },
+    { tools: [['eye', 'Read', 'disk overview'], ['eye', 'Summarized', '9 categories'], ['eye', 'Looked at', '~/Projects'], ['eye', 'Looked at', '~/Library/Caches'], ['eye', 'Checked', 'Autodesk Fusion']],
+      a: [`You have <b>18.0 GB free of 460 GB</b>. The quickest win is the safe pass already in your queue: <b>45.1 GB</b> of caches and Xcode build files that rebuild themselves. That alone gets you to about 63 GB free.`,
+          'Since your projects now live on the Mac Studio, two more things are worth it:'] },
+    { prop: 'p1' }, { prop: 'p2' },
+    { a: [`The biggest single item is <b>Autodesk Fusion</b>: two full builds, 22.4 GB. If you no longer use Fusion on this Mac, remove it with Autodesk’s own uninstaller. Deleting one build folder by hand breaks it.`] },
+    { advice: true },
+    { u: 'And Photos?' },
+    { tools: [['eye', 'Inspected', 'Photos Library.photoslibrary']],
+      a: [`Photos uses 20.5 GB. I won’t queue it: it may be the only copy of your pictures. In Photos, turn on <b>Settings › iCloud › Optimize Mac Storage</b> and macOS keeps small versions here.`] },
+    { rejected: true }
+  ];
+}
+const PROPS = {
+  p1: { q: 'nm', t: () => 'Remove node_modules from 12 projects', s: 4.1,
+    d: () => 'These projects are on your Mac Studio. Each folder comes back with npm install.' },
+  p2: { q: 'dmg', t: () => 'Move 7 old installers to the Trash', s: 9.0,
+    d: () => 'Disk images older than 30 days; the apps they installed are already in Applications.' }
+};
+function propCard(pid) {
+  const p = PROPS[pid], st = S.props[pid];
+  const acts = st === 'pending'
+    ? `<button class="chip-btn pri" data-act="approve" data-p="${pid}">${I('plus')}${'Add to queue'}</button><button class="chip-btn sec" data-act="dismiss" data-p="${pid}">${'Not now'}</button>`
+    : st === 'approved' ? `<span class="done">${I('check')}${'In your queue'}</span><button class="chip-btn sec" data-act="nav" data-screen="cleanup">${'Open queue'}</button>`
+    : `<span class="faint">${'Dismissed'}</span><button class="chip-btn sec" data-act="reprop" data-p="${pid}">${'Undo'}</button>`;
+  return `<div class="prop"><div class="prop-h"><b>${p.t()}</b><span class="num" style="font-weight:650">${fmt(p.s)}</span></div>
+    <div style="margin:2px 0 6px">${risk('review')} <span class="faint" style="font-size:11px;margin-left:4px">${'Proposal'}</span></div><p>${p.d()}</p><div class="acts">${acts}</div></div>`;
+}
+const adviceCard = () => `<div class="prop"><div class="prop-h"><b>${'Uninstall Autodesk Fusion'}</b><span class="num" style="font-weight:650">${fmt(22.4)}</span></div>
+  <p>${'Not added to the queue: Fusion needs its own uninstaller. I can open it for you.'}</p>
+  <div class="acts"><button class="chip-btn sec">${I('ext')}${'Open “Remove Autodesk Fusion”'}</button></div></div>`;
+const rejCard = () => `<div class="prop rej"><div class="prop-h"><b>${I('shield')} ${'Photos Library is protected'}</b><span class="faint num">${fmt(20.5)}</span></div>
+  <p>${'Lightwell refused this path. Nothing was queued or deleted.'}</p></div>`;
+const toolChips = ts => `<div class="tools">${ts.map(t => `<span class="tool">${I(t[0])}${t[1]} <code>${esc(t[2])}</code></span>`).join('')}</div>`;
+function chatHTML(opts = {}) {
+  return chatData().map(m => {
+    if (m.u) return `<div class="msg-u">${m.u}</div>`;
+    if (m.prop) return propCard(m.prop);
+    if (m.advice) return adviceCard();
+    if (m.rejected) return rejCard();
+    return `<div class="msg-a ${opts.voice ? 'voice' : ''}">${m.tools ? toolChips(m.tools) : ''}${m.a.map(p => `<p>${p}</p>`).join('')}</div>`;
+  }).join('');
+}
+const composer = () => `<div class="sugg"><button>${'What is in ~/.claude?'}</button><button>${'Which apps have I not opened this year?'}</button></div>
+  <div class="composer"><span>${'Ask about your disk…'}</span><button class="send" aria-label="send">${I('up')}</button></div>
+  <div class="ai-foot">${I('shield')}${'Claude can look, not delete. Every proposal waits for you.'}</div>`;
+
+function sheetHTML() {
+  if (!S.sheet) return '';
+  const items = [...S.sel].map(id => QBY[id]);
+  const tot = selTotal();
+  const viaSim = items.filter(q => q.m === 'simctl');
+  return `<div class="veil" data-act="cancel"></div><div class="sheet" role="dialog">
+    <h3>${`Move ${fmt(tot)} to the Trash?`}</h3>
+    <p>${`${items.length} items. Everything goes to the Trash first, so you can put any of it back until you empty it.`}
+    ${viaSim.length ? ' Simulator items are removed with simctl and need your admin password.' : ''}</p>
+    <div class="warn">${I('warn')}<div>${'No Time Machine backup was found. Consider making one before you empty the Trash.'}</div></div>
+    <ul>${items.map(q => `<li><span>${q.n}</span><span class="num">${fmt(q.s)}</span></li>`).join('')}</ul>
+    <p style="font-size:12px">${'Xcode and Spotify will be asked to quit first.'}</p>
+    <div class="acts"><button class="btn btn-sec" data-act="cancel">${'Cancel'}</button><button class="btn btn-pri" data-act="confirm">${I('trash')}${'Move to Trash'}</button></div></div>`;
+}
+const toastHTML = () => S.toast ? `<div class="toast">${I('check')}<span>${S.toast}</span><button data-act="undo">${'Undo'}</button></div>` : '';
+
+/* =============================== treemap =============================== */
+function worst(row, s) { let sum = 0, mx = 0, mn = Infinity; row.forEach(n => { sum += n.a; mx = Math.max(mx, n.a); mn = Math.min(mn, n.a); }); return Math.max(s * s * mx / (sum * sum), (sum * sum) / (s * s * mn)); }
+function squarify(items, x, y, w, h) {
+  const out = []; const total = items.reduce((s, i) => s + i.s, 0); if (!total || w <= 0 || h <= 0) return out;
+  let nodes = items.filter(i => i.s > 0).map(i => ({ node: i, a: i.s * (w * h) / total })); let r = { x, y, w, h };
+  while (nodes.length) {
+    const sh = Math.min(r.w, r.h); let row = [nodes[0]], i = 1;
+    while (i < nodes.length) { const c = row.concat(nodes[i]); if (worst(c, sh) <= worst(row, sh)) { row = c; i++; } else break; }
+    nodes = nodes.slice(row.length); const sum = row.reduce((s, n) => s + n.a, 0);
+    if (r.w >= r.h) { const cw = sum / r.h; let cy = r.y; row.forEach(n => { const ch = n.a / cw; out.push({ ...n, x: r.x, y: cy, w: cw, h: ch }); cy += ch; }); r = { x: r.x + cw, y: r.y, w: r.w - cw, h: r.h }; }
+    else { const ch = sum / r.w; let cx = r.x; row.forEach(n => { const cw = n.a / ch; out.push({ ...n, x: cx, y: r.y, w: cw, h: ch }); cx += cw; }); r = { x: r.x, y: r.y + ch, w: r.w, h: r.h - ch }; }
+  }
+  return out;
+}
+const tipAttr = n => `data-tip="${esc(dispName(n))}|${fmt(n.s)}|${esc(pathOf(n))}"`;
+function treemapA(node, W, H) {
+  const G = 4; const cells = squarify(node.k, 0, 0, W, H);
+  return `<div class="tm" style="width:${W}px;height:${H}px">${cells.map(c => {
+    const n = c.node, x = c.x + G / 2, y = c.y + G / 2, w = Math.max(0, c.w - G), h = Math.max(0, c.h - G);
+    let inner = '';
+    if (n.k.length && w > 90 && h > 70) {
+      const sub = squarify(n.k, 6, 42, w - 12, h - 48);
+      inner = sub.map(sc => { const sw = sc.w - 3, shh = sc.h - 3; const lab = sw > 70 && shh > 30 ? `<div class="tm-lab" style="font-size:11px;font-weight:560;top:5px;left:7px">${esc(dispName(sc.node))}<small>${fmt(sc.node.s)}</small></div>` : '';
+        return `<div class="tm-sub" style="left:${sc.x}px;top:${sc.y}px;width:${sw}px;height:${shh}px;background:${catVar(sc.node.c)}" ${tipAttr(sc.node)}>${lab}</div>`; }).join('');
+    }
+    const lab = w > 64 && h > 34 ? `<div class="tm-lab">${esc(dispName(n))}<small>${fmt(n.s)}${n.r === 'safe' ? ' · ' + 'safe' : ''}</small></div>` : '';
+    return `<div class="tm-cell ${n.r === 'locked' ? 'locked' : ''}" data-act="drill" data-id="${n.id}" ${tipAttr(n)} style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:${inner ? `color-mix(in srgb, ${catVar(n.c)} 45%, var(--win))` : catVar(n.c)}">${lab}${inner}</div>`;
+  }).join('')}</div>`;
+}
+
+/* =============================== Direction A: Daylight =============================== */
+function A_shell(body, extra = '') {
+  const used = TOTAL - S.free;
+  const title = { overview: 'Macintosh HD', scan: 'Scanning', explore: 'Explore', cleanup: 'Review queue', assistant: 'Macintosh HD' }[S.screen];
+  return `<div class="win dA ${S.screen === 'assistant' ? '' : ''}">
+  <aside class="side">${lights()}
+    <div class="nav-h">Lightwell</div>
+    ${['overview', 'explore', 'cleanup'].map(s => `<button class="nav" data-act="nav" data-screen="${s}" aria-current="${S.screen === s || (s === 'overview' && S.screen === 'scan')}">${I(scrIco[s])}${s === 'cleanup' ? 'Review queue' : scrName(s)}${s === 'cleanup' ? `<span class="badge num">${fmt(selTotal())}</span>` : ''}</button>`).join('')}
+    <button class="nav" data-act="nav" data-screen="assistant" aria-current="${S.screen === 'assistant'}">${I('chat')}${'Ask Claude'}</button>
+    <div class="nav-h">${'Locations'}</div>
+    <button class="nav" data-act="nav" data-screen="explore">${I('disk')}Macintosh HD</button>
+    <button class="nav" data-act="nav" data-screen="explore">${I('home')}you</button>
+    <button class="nav">${I('net')}Mac Studio<span class="badge">${'offline'}</span></button>
+    <div class="side-foot"><div class="lbl">${'Free on Macintosh HD'}</div><div class="big num">${fmt(S.free)}</div>
+      <div class="minibar">${CATSUM.map(([c, v]) => `<i style="width:${v / TOTAL * 100}%;background:${catVar(c)}"></i>`).join('')}<i style="width:${S.free / TOTAL * 100}%;background:var(--light)"></i></div></div>
+  </aside>
+  <main class="main">
+    <div class="tb"><div class="cap-group"><button class="cap" aria-label="back">${I('cl')}</button><button class="cap" aria-label="forward">${I('cr')}</button></div>
+      <span class="tb-title">${title}</span><span class="spacer"></span>
+      ${S.screen === 'explore' ? `<button class="cap" data-act="nav" data-screen="scan">${I('redo')}${'Rescan'}</button>` : ''}
+      <button class="cap" data-act="nav" data-screen="cleanup">${I('tray')}<span class="num">${fmt(selTotal())}</span></button>
+      <button class="cap" data-act="nav" data-screen="${S.screen === 'assistant' ? 'overview' : 'assistant'}" aria-label="assistant">${I('side')}</button>
+    </div>
+    <div class="content"><div class="screen ${S.screen === 'assistant' ? 'dimmed' : ''}">${body}</div></div>
+  </main>${extra}${sheetHTML()}${toastHTML()}</div>`;
+}
+const catOrder = () => CATSUM.slice().sort((a, b) => (a[0] === 'other' || a[0] === 'sys') - (b[0] === 'other' || b[0] === 'sys') || b[1] - a[1]);
+function A_overview() {
+  const cs = catOrder();
+  const top3 = cs.filter(c => c[0] !== 'other').slice(0, 3);
+  return `<div class="ov"><div>
+    <div class="eyebrow">${'Macintosh HD · quick estimate from 41 known places'}</div>
+    <div class="hero num">${fmt(S.free)}<small>${'free of 460 GB'}</small></div>
+    <p class="lede">${`Most of the space goes to <b>${catName(top3[0][0]).toLowerCase()}</b> (${fmt(top3[0][1], 0)}), <b>${catName(top3[1][0]).toLowerCase()}</b> (${fmt(top3[1][1], 0)}) and <b>${catName(top3[2][0]).toLowerCase()}</b> (${fmt(top3[2][1], 0)}). About 21 GB is system data a normal scan cannot read.`}</p>
+    <div class="capbar">${cs.map(([c, v]) => `<i style="flex:${v};background:${catVar(c)}" data-tip="${catName(c)}|${fmt(v)}|"></i>`).join('')}<i class="free" style="flex:${S.free}" data-tip="${'Free'}|${fmt(S.free)}|"></i></div>
+    <div class="legend">${cs.map(([c, v]) => `<span><i class="dot" style="background:${catVar(c)}"></i>${catName(c)} <b class="num">${fmt(v, v < 20 ? 1 : 0)}</b></span>`).join('')}<span><i class="dot" style="background:var(--light)"></i>${'Free'} <b class="num">${fmt(S.free)}</b></span></div>
+    <div class="sect-h"><h3>${'Room you can get back'}</h3><span class="muted">${'Free space after each step'}</span></div>
+    <div class="ladder">
+      ${rungA(1, 'safe', 'Safe to clear', 'Caches and build files that rebuild themselves. Already ticked in your queue; it all goes to the Trash.', RECL.safe, S.free + RECL.safe, 'cleanup')}
+      ${rungA(2, 'review', 'Worth a look', 'Projects already on your Mac Studio, old installers, simulators, Autodesk Fusion. You decide item by item.', RECL.review, S.free + RECL.safe + RECL.review, 'cleanup')}
+      ${rungA(3, 'keep', 'Keep', 'Photos and Messages. Lightwell will not delete these; it shows you the setting that shrinks them.', RECL.keep, null, 'cleanup')}
+    </div></div>
+    <aside>
+      <div class="eyebrow" style="margin-bottom:10px">${'Volumes'}</div>
+      <div class="vol"><div class="vol-h">${I('disk')}<div><b>Macintosh HD</b><small>${'Internal · encrypted · APFS'}</small></div></div>
+        <div class="bar"><i style="width:${(TOTAL - S.free) / TOTAL * 100}%"></i></div>
+        <div class="row"><span class="num">${fmt(TOTAL - S.free)} ${'used'}</span><b class="num">${fmt(S.free)} ${'free'}</b></div>
+        <div class="acts"><button class="btn btn-pri" data-act="nav" data-screen="scan">${I('scan')}${'Scan'}</button><button class="btn btn-ghost" data-act="nav" data-screen="explore">${'Last map'}</button></div></div>
+      <div class="vol dim"><div class="vol-h">${I('net')}<div><b>Mac Studio</b><small>${'Network · not mounted'}</small></div></div>
+        <p class="note" style="margin-top:8px">${'Connect it to confirm your projects are there before you remove the copies here.'}</p>
+        <div class="acts"><button class="btn btn-sec">${'Connect'}</button></div></div>
+      <button class="btn btn-ghost" style="padding-left:2px">${I('folder')}${'Scan a folder…'}</button>
+      <p class="note" style="margin-top:14px">${'Lightwell reads names and sizes only, never file contents.'}</p>
+    </aside></div>`;
+}
+function rungA(i, r, h, p, sz, after, act) {
+  const col = { safe: 'var(--safe)', review: 'var(--review)', keep: 'var(--keep)' }[r];
+  return `<button class="rung" data-act="nav" data-screen="${act}"><span class="step" style="background:${col}">${i}</span><div><h4>${h}</h4><p>${p}</p></div>
+    <div class="sz num">${fmt(sz)}</div><div class="after">${after ? `${'free after'}<b class="num">${fmt(after, 0)}</b>` : `<b>${'not deletable'}</b>`}</div>${I('cr', 'chev')}</button>`;
+}
+function scanVals() {
+  const p = ease(S.scan.p);
+  return { files: FINAL.files * p, dirs: FINAL.dirs * p, gb: FINAL.gb * p, sec: FINAL.sec * S.scan.p, items: FEED.filter(f => f[4] <= S.scan.p), safe: FEED.filter(f => f[4] <= S.scan.p && f[3] === 'safe').reduce((a, f) => a + f[1], 0) + (S.scan.p > .5 ? 8.2 : 0) * Math.min(1, S.scan.p) };
+}
+const tclock = s => { s = Math.round(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+function A_scan() {
+  const v = scanVals(), done = S.scan.done;
+  return `<div class="scan-top"><div><div class="eyebrow">${done ? 'Scan finished' : 'Scanning Macintosh HD'}</div>
+    <div class="hero num" id="sc-gb" style="font-size:46px">${fmt(v.gb)}<small>${'of 442 GB used'}</small></div></div>
+    <div style="display:flex;gap:8px">${done ? `<button class="btn btn-pri" data-act="nav" data-screen="explore">${I('map')}${'Open map'}</button>` : `<button class="btn btn-sec" data-act="nav" data-screen="overview">${I('stop')}${'Stop'}</button>`}</div></div>
+    <div class="scan-bar"><i id="sc-bar" style="width:${S.scan.p * 100}%"></i></div>
+    <div class="reading mono" id="sc-read">${done ? 'Done in 1:12. Results are saved, so the next scan only checks what changed.' : I('folder') + esc(READING[Math.floor(S.scan.p * 40) % READING.length])}</div>
+    <div class="counters"><div><small>${'Files'}</small><b class="num" id="sc-files">${fnum(v.files)}</b></div><div><small>${'Folders'}</small><b class="num" id="sc-dirs">${fnum(v.dirs)}</b></div>
+      <div><small>${'Safe to clear so far'}</small><b class="num" id="sc-safe" style="color:var(--safe)">${fmt(Math.min(45.1, v.safe))}</b></div><div><small>${'Elapsed'}</small><b class="num" id="sc-t">${tclock(v.sec)}</b></div></div>
+    <div class="sect-h"><h3>${'Largest so far'}</h3><span class="muted">${'Streaming as folders finish'}</span></div>
+    <div class="feed" id="sc-feed">${v.items.slice().reverse().map(feedRowA).join('')}</div>`;
+}
+const feedRowA = f => `<div class="feed-row"><i class="dot" style="background:${catVar(f[2])}"></i><div class="nm">${esc(f[0].split('/').pop())}<small>${esc(f[0])}</small></div>${risk(f[3])}<span class="s num">${fmt(f[1])}</span></div>`;
+function crumbsA(node, act = 'drill') {
+  return chainOf(node).map((n, i, a) => `${i ? I('cr') : ''}<button data-act="${act}" data-id="${n.id}">${esc(dispName(n))}</button>`).join('');
+}
+function A_explore() {
+  const node = BYID[S.focus.A];
+  const max = node.k[0] ? node.k[0].s : 1;
+  return `<div class="ex-head"><div><div class="crumbs">${crumbsA(node)}</div></div>
+    <div style="display:flex;gap:8px;align-items:center">${node.parent ? `<button class="btn btn-sec" data-act="drill" data-id="${node.parent.id}">${I('up')}${'Up'}</button>` : ''}</div></div>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin:-2px 0 12px"><div class="ex-head" style="margin:0"><h2>${esc(dispName(node))}<small class="num">${fmt(node.s)}</small></h2></div>
+      <span class="muted" style="font-size:12px">${'Click a block to go inside. Area is size.'}</span></div>
+    ${treemapA(node, 900, 340)}
+    <div class="list">${node.k.slice(0, 9).map(n => `<div class="li"><i class="dot" style="background:${catVar(n.c)}"></i>
+      <div class="nm">${n.k.length ? I('folder') : ''}<button data-act="drill" data-id="${n.id}" style="font-weight:560">${esc(dispName(n))}</button></div>
+      <div class="track"><i style="width:${n.s / max * 100}%;background:${catVar(n.c)}"></i></div><div class="s num">${fmt(n.s)}</div><div>${risk(n.r)}</div>
+      <div class="act">${n.r === 'safe' || n.r === 'review' ? `<button class="chip-btn sec" data-act="nav" data-screen="cleanup">${I('plus')}${'Queue'}</button>` : ''}</div></div>`).join('')}</div>`;
+}
+function queueRowsA(g) {
+  return Q.filter(q => q.g === g).map(q => {
+    const on = S.sel.has(q.id), can = checkable(q);
+    const by = q.prop && S.props[q.prop] === 'approved' ? `<span class="bychip">${I('chat')}${'Proposed by Claude'}</span>` : '';
+    return `<div class="qi"><button class="check ${on ? 'on' : ''} ${can ? '' : 'na'}" ${can ? `data-act="toggle" data-id="${q.id}"` : ''} aria-label="select">${I('check')}</button>
+      <div><div class="nm">${q.n} ${risk(q.r)} ${by}</div><div class="why">${q.why()}</div><div class="pth mono">${esc(q.p)}</div></div>
+      <div class="meth">${q.m === 'vendor' ? `<button class="chip-btn sec">${I('ext')}${'Uninstaller'}</button>` : q.m === 'app' ? `<button class="chip-btn sec">${I('ext')}${'Open setting'}</button>` : methName(q.m)}</div>
+      <div class="s num">${fmt(q.s)}</div></div>`;
+  }).join('');
+}
+function A_cleanup() {
+  const tot = selTotal();
+  return `<div class="q-head"><div><h2>${'Review queue'}</h2><p>${'Safe items are ticked for you. Nothing else is, until you say so.'}</p></div>
+    <button class="btn btn-ghost" data-act="nav" data-screen="assistant">${I('chat')}${'Ask Claude about these'}</button></div>
+    ${['build', 'cache', 'review', 'keep'].map(g => `<section class="grp"><div class="grp-h"><h4>${grpName(g)}</h4><span class="num">${fmt(Q.filter(q => q.g === g).reduce((a, q) => a + q.s, 0))}</span></div>${queueRowsA(g)}</section>`).join('')}
+    <div class="actionbar"><div><div class="muted" style="font-size:12px">${`${S.sel.size} selected · free after`} <b class="num" style="color:var(--ink)">${fmt(S.free + tot, 0)}</b></div><div class="tot num">${fmt(tot)}</div></div>
+      <span style="flex:1"></span><span class="muted" style="font-size:12px;max-width:260px;text-align:right">${'Goes to the Trash. You can put anything back.'}</span>
+      <button class="btn btn-pri" data-act="trash" ${tot ? '' : 'disabled'}>${I('trash')}${'Move to Trash'}</button></div>`;
+}
+function A_assistantPanel() {
+  return `<section class="insp" aria-label="assistant"><div class="insp-h"><div style="flex:1"><b>${'Ask Claude'}</b><small>${'Uses your claude login · read only'}</small></div>
+    <button class="cap" data-act="nav" data-screen="overview" aria-label="close">${I('x')}</button></div>
+    <div class="insp-b">${chatHTML()}</div><div class="insp-f">${composer()}</div></section>`;
+}
+
+/* =============================== Direction B: Core Sample =============================== */
+function B_shell(body, pathNode) {
+  const crumbs = pathNode ? chainOf(pathNode).map((n, i) => `${i ? '<i>/</i>' : ''}<button data-act="drill" data-id="${n.id}">${esc(n.n === 'you' ? '~' : n.n)}</button>`).join('') : `<span>${S.screen === 'scan' ? 'scan://Macintosh HD' : S.screen === 'cleanup' ? 'queue://' : S.screen === 'assistant' ? 'claude://session/4b1e' : 'volume://Macintosh HD'}</span>`;
+  return `<div class="win dB">
+  <aside class="side">${lights()}
+    <div class="nav-h">${'Views'}</div>
+    ${SCREENS.map((s, i) => `<button class="nav" data-act="nav" data-screen="${s}" aria-current="${S.screen === s}">${I(scrIco[s])}${scrName(s)}<kbd>⌘${i + 1}</kbd></button>`).join('')}
+    <div class="nav-h">${'Locations'}</div>
+    <button class="nav" data-act="nav" data-screen="explore">${I('disk')}Macintosh HD<span class="meta low n">${fmt(S.free, 0)}</span></button>
+    <button class="nav">${I('net')}Mac Studio<span class="meta">${'off'}</span></button>
+    <button class="nav">${I('folder')}${'Scan folder…'}</button>
+    <div class="nav-h">${'Queue'}</div>
+    <button class="nav" data-act="nav" data-screen="cleanup">${I('tray')}${'Selected'}<span class="meta n">${fmt(selTotal())}</span></button>
+  </aside>
+  <main class="main">
+    <div class="tb"><div class="cap-group"><button class="cap">${I('cl')}</button><button class="cap">${I('cr')}</button></div>
+      <div class="pathfield">${crumbs}</div>
+      <button class="cap" data-act="nav" data-screen="scan">${I('redo')}</button><button class="cap" data-act="nav" data-screen="assistant">${I('term')}Claude</button></div>
+    <div class="content"><div class="screen">${body}</div></div>
+  </main>
+  <div class="status"><span>${fnum(FINAL.files)} ${'files'}</span><span>${fmt(USED)} ${'used'}</span><span>${'scanned 14:02'}</span><span class="sp"></span><span class="ok">● claude 2.1.296 · ${'read-only tools'}</span><span>${'no Time Machine'}</span></div>
+  ${sheetHTML()}${toastHTML()}</div>`;
+}
+function B_overview() {
+  const cs = catOrder();
+  const ticks = [0, 50, 100, 150, 200, 250, 300, 350, 400, 460];
+  const TOPS = [['~/Projects', 44.4, 'proj.projects', 'review'], ['~/Library/Application Support/Autodesk/webdeploy', 22.4, 'vendor.autodesk_fusion', 'review'],
+    ['~/Pictures/Photos Library.photoslibrary', 20.5, 'media.photos', 'keep'], ['/Library/Developer/CoreSimulator', 19.1, 'sim.runtime', 'review'], ['~/Library/Caches', 16.2, 'cache.user_app', 'safe'],
+    ['~/Library/Developer/Xcode/DerivedData', 15.0, 'dev.derived_data', 'safe'], ['~/Library/Developer/CoreSimulator/Devices', 12.1, 'sim.devices', 'review'], ['~/Library/Application Support/Claude', 11.7, 'vendor.claude_vm', 'review'],
+    ['~/Downloads', 11.5, 'dl.old_installers', 'review'], ['~/.claude', 10.1, 'claude.home', 'review']];
+  return `<div class="sh"><h2>Macintosh HD</h2><small>APFS · ${'encrypted'} · 460 GB · <span style="color:var(--accent)">${fmt(S.free)} ${'free'}</span> · ${'quick estimate, 41 known paths, 0.8 s'}</small>
+      <span class="r"><button class="btn btn-pri" data-act="nav" data-screen="scan">${I('scan')}${'Full scan'} <span class="kbd" style="color:inherit;box-shadow:inset 0 0 0 1px currentColor;opacity:.6">⌘R</span></button></span></div>
+    <div class="core">${cs.map(([c, v]) => `<i style="flex:${v};background:${catVar(c)}" data-tip="${catName(c)}|${fmt(v)}|">${v > 25 ? `${catName(c)}<span>${fmt(v)}</span>` : v > 12 ? `<span>${fmt(v, 0)}</span>` : ''}</i>`).join('')}<i class="free" style="flex:${S.free}" data-tip="${'Free'}|${fmt(S.free)}|"></i></div>
+    <div class="axis">${ticks.map(t => `<span style="left:${t / TOTAL * 100}%">${t}</span>`).join('')}</div>
+    <div class="grid2">
+      <div><div class="sh"><h2>${'Reclaimable'}</h2><small>${'cumulative, by risk'}</small></div>
+        <table class="ladder"><thead><tr><th></th><th>${'Level'}</th><th class="r">${'Size'}</th><th class="r">${'Free after'}</th><th class="r">${'Items'}</th></tr></thead><tbody>
+        <tr class="hov"><td><span class="glyph" style="background:var(--safe)">S</span></td><td>${'Safe · regenerates'}</td><td class="r n bigfig" style="color:var(--safe)">${fmt(RECL.safe)}</td><td class="r n">${fmt(S.free + RECL.safe)}</td><td class="r n">10</td></tr>
+        <tr class="hov"><td><span class="glyph" style="background:var(--review)">R</span></td><td>${'Review · your call'}</td><td class="r n bigfig">${fmt(RECL.review)}</td><td class="r n">${fmt(S.free + RECL.safe + RECL.review)}</td><td class="r n">7</td></tr>
+        <tr class="hov"><td><span class="glyph" style="background:var(--keep)">K</span></td><td>${'Keep · manage in app'}</td><td class="r n bigfig faint">${fmt(RECL.keep)}</td><td class="r n faint">n/a</td><td class="r n">2</td></tr>
+        </tbody></table>
+        <div class="sh"><h2>${'Volumes'}</h2></div>
+        <table><thead><tr><th>${'Name'}</th><th>${'Kind'}</th><th class="r">${'Capacity'}</th><th class="r">${'Free'}</th><th></th></tr></thead><tbody>
+        <tr class="hov"><td>${I('disk')} Macintosh HD</td><td class="tag">APFS · internal</td><td class="r n">460 GB</td><td class="r n" style="color:var(--accent)">${fmt(S.free)}</td><td class="r"><button class="rowbtn" style="opacity:1" data-act="nav" data-screen="scan">${'Scan'}</button></td></tr>
+        <tr class="hov"><td>${I('net')} Mac Studio</td><td class="tag">SMB · ${'not mounted'}</td><td class="r n faint">n/a</td><td class="r n faint">n/a</td><td class="r"><button class="rowbtn" style="opacity:1">${'Connect'}</button></td></tr>
+        <tr><td colspan="5" class="tag" style="white-space:normal">${'Hidden / system (needs admin to inspect): 20.7 GB. Shown as locked, never as free.'}</td></tr></tbody></table></div>
+      <div><div class="sh"><h2>${'Top consumers'}</h2><small>${'by path'}</small></div>
+        <table style="table-layout:fixed"><colgroup><col style="width:30px"><col><col style="width:78px"><col style="width:96px"></colgroup><thead><tr><th>#</th><th>${'Path'}</th><th class="r">${'Size'}</th><th>${'Risk'}</th></tr></thead><tbody>
+        ${TOPS.map((t, i) => `<tr class="hov" data-tip="${esc(t[0])}|${fmt(t[1])}|${t[2]}"><td class="n faint">${String(i + 1).padStart(2, '0')}</td><td><div class="pth" style="max-width:none">${esc(t[0])}</div></td><td class="r n">${fmt(t[1])}</td><td>${risk(t[3])}</td></tr>`).join('')}
+        </tbody></table></div></div>`;
+}
+function B_scan() {
+  const v = scanVals(), done = S.scan.done, p = S.scan.p;
+  return `<div class="sh"><h2>${done ? 'Scan complete' : 'Scanning Macintosh HD'}</h2><small id="sc-read">${done ? 'finished in 1:12 · index saved · FSEvents watching for changes' : esc(READING[Math.floor(p * 40) % READING.length])}</small>
+    <span class="r">${done ? `<button class="btn btn-pri" data-act="nav" data-screen="explore">${I('map')}${'Explore'}</button>` : `<button class="btn btn-sec" data-act="nav" data-screen="overview">${I('stop')}${'Stop'} <span class="kbd">⌘.</span></button>`}</span></div>
+    <div class="meters"><div><small>${'Files'}</small><b id="sc-files">${fnum(v.files)}</b></div><div><small>${'Folders'}</small><b id="sc-dirs">${fnum(v.dirs)}</b></div>
+      <div><small>${'Bytes'}</small><b id="sc-gb">${fmt(v.gb)}</b></div><div><small>${'Safe found'}</small><b id="sc-safe" style="color:var(--safe)">${fmt(Math.min(45.1, v.safe))}</b></div><div><small>${'Elapsed'}</small><b id="sc-t">${tclock(v.sec)}</b></div></div>
+    <div class="roots" id="sc-roots">${rootsB(p)}</div>
+    <div class="sh"><h2>${'Completed folders'}</h2><small>${'largest first appear as their subtree finishes'}</small></div>
+    <div class="log"><table><thead><tr><th>${'Path'}</th><th>${'Category'}</th><th>${'Risk'}</th><th class="r">${'Size'}</th></tr></thead><tbody id="sc-feed">${v.items.slice().reverse().map(feedRowB).join('')}</tbody></table></div>`;
+}
+const feedRowB = f => `<tr class="row-in hov"><td><div class="pth" style="max-width:480px">${esc(f[0])}</div></td><td><i class="dot" style="background:${catVar(f[2])};margin-right:6px"></i>${catName(f[2])}</td><td>${risk(f[3])}</td><td class="r n">${fmt(f[1])}</td></tr>`;
+function rootsB(p) {
+  return ROOTS.map(r => { const t = Math.max(0, Math.min(1, (p - r[2]) / (r[3] - r[2]))); const d = t >= 1;
+    return `<div class="root ${d ? 'done' : ''}"><span class="mono">${r[0]}</span><div class="t"><i style="width:${t * 100}%"></i></div><span class="n" style="text-align:right">${fmt(r[1] * t)}</span><span class="st">${d ? 'done' : t > 0 ? Math.round(t * 100) + '%' : 'queued'}</span></div>`; }).join('');
+}
+function icicle(node, W) {
+  const RH = 44, out = [];
+  function lay(n, x, w, d) {
+    if (d > 3 || w < 1.5) return;
+    const lab = w > 54 ? `${esc(dispName(n))}${w > 120 ? `<span>${fmt(n.s)}</span>` : ''}` : '';
+    out.push(`<div class="ice-c ${d === 0 ? 'focus' : ''} ${n.r === 'locked' ? 'locked' : ''}" ${d ? `data-act="drill" data-id="${n.id}"` : (n.parent ? `data-act="drill" data-id="${n.parent.id}"` : '')} ${tipAttr(n)} style="left:${x}px;top:${d * RH}px;width:${w}px;height:${RH}px;background:${catVar(n.c)}">${d === 0 ? (n.parent ? '↑ ' : '') : ''}${lab}</div>`);
+    let cx = x; n.k.forEach(k => { const kw = w * k.s / n.s; lay(k, cx, kw, d + 1); cx += kw; });
+  }
+  lay(node, 0, W, 0);
+  return `<div class="ice">${out.join('')}</div>`;
+}
+function B_explore() {
+  const node = BYID[S.focus.B];
+  const ITEMS = { 'Projects': '48,211', 'Library': '1,204,330', 'Caches': '96,005', 'DerivedData': '211,870' };
+  const MOD = ['2 h', '1 d', '3 d', '6 d', '12 d', '3 w', '5 w', '2 mo', '4 mo', '7 mo', '1 y', '2 y', '3 y'];
+  return `<div class="sh"><h2>${esc(dispName(node))}</h2><small>${fmt(node.s)} · ${node.k.length} ${'children'} · ${'icicle, 4 levels, width = size'}</small>
+    <span class="r faint" style="font-size:11px">${'click a band to zoom · top band zooms out'}</span></div>
+    ${icicle(node, 944)}
+    <table style="margin-top:14px"><thead><tr><th>${'Name'}</th><th class="r">${'Size'}</th><th>% ${'of parent'}</th><th class="r">${'Items'}</th><th class="r">${'Modified'}</th><th>${'Category'}</th><th>${'Risk'}</th><th></th></tr></thead><tbody>
+    ${node.k.map((n, i) => `<tr class="hov"><td><button data-act="drill" data-id="${n.id}" style="font-weight:550">${n.k.length ? I('folder') + ' ' : ''}${esc(dispName(n))}</button></td><td class="r n">${fmt(n.s)}</td>
+      <td><span class="pct"><i style="width:${n.s / node.s * 100}%;background:${catVar(n.c)}"></i></span><span class="n faint">${(n.s / node.s * 100).toFixed(1)}</span></td>
+      <td class="r n faint">${ITEMS[n.n] || fnum(n.s * 2711 + i * 37)}</td><td class="r n faint">${MOD[(i * 3 + n.n.length) % MOD.length]}</td><td><i class="dot" style="background:${catVar(n.c)};margin-right:6px"></i>${catName(n.c)}</td><td>${risk(n.r)}</td>
+      <td class="r">${n.r === 'safe' || n.r === 'review' ? `<button class="rowbtn" data-act="nav" data-screen="cleanup">+ ${'queue'} <span class="kbd">⌘↩</span></button>` : ''}</td></tr>`).join('')}</tbody></table>`;
+}
+function B_cleanup() {
+  const tot = selTotal(); const sel = [...S.sel].map(id => QBY[id]);
+  const tr = sel.filter(q => q.m === 'trash'), sim = sel.filter(q => q.m === 'simctl');
+  return `<div class="qgrid"><div>
+    <div class="sh"><h2>${'Review queue'}</h2><small>${Q.length} ${'candidates'} · ${S.sel.size} ${'selected'}</small><span class="r"><span class="kbd">space</span> <span class="faint" style="font-size:11px">${'toggle'}</span></span></div>
+    <table style="table-layout:fixed"><colgroup><col style="width:30px"><col><col style="width:128px"><col style="width:84px"><col style="width:78px"><col style="width:66px"></colgroup><thead><tr><th></th><th>${'Item'}</th><th>${'Rule'}</th><th>${'Risk'}</th><th>${'Method'}</th><th class="r">${'Size'}</th></tr></thead><tbody>
+    ${['build', 'cache', 'review', 'keep'].map(g => `<tr class="grp-row"><td></td><td colspan="4">${grpName(g)}</td><td class="r n">${fmt(Q.filter(q => q.g === g).reduce((a, q) => a + q.s, 0))}</td></tr>` +
+      Q.filter(q => q.g === g).map(q => { const on = S.sel.has(q.id), can = checkable(q);
+        const by = q.prop && S.props[q.prop] === 'approved' ? ` <span class="tag" style="color:var(--accent)">← claude</span>` : '';
+        return `<tr class="hov ${on ? 'sel' : ''}"><td><button class="check ${on ? 'on' : ''} ${can ? '' : 'na'}" ${can ? `data-act="toggle" data-id="${q.id}"` : ''}>${I('check')}</button></td>
+        <td style="white-space:normal"><div style="font-weight:560">${q.n}${by}</div><div class="pth" style="max-width:none">${esc(q.p)}</div><div class="why">${q.why()}</div></td><td class="tag" style="overflow:hidden;text-overflow:ellipsis">${q.rule}</td><td>${risk(q.r)}</td><td class="tag">${methName(q.m)}</td><td class="r n">${fmt(q.s)}</td></tr>`; }).join('')).join('')}
+    </tbody></table></div>
+    <aside><div class="summary"><div class="faint" style="font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600">${'Will free'}</div>
+      <div class="bigfig" style="font-size:32px;margin:4px 0 10px">${fmt(tot)}</div>
+      <div class="line"><span>${'Free now'}</span><span class="n">${fmt(S.free)}</span></div>
+      <div class="line"><span>${'Free after'}</span><span class="n" style="color:var(--safe)">${fmt(S.free + tot)}</span></div>
+      <div class="line"><span>${'To Trash'}</span><span class="n">${tr.length} · ${fmt(tr.reduce((a, q) => a + q.s, 0))}</span></div>
+      <div class="line"><span>simctl (admin)</span><span class="n">${sim.length} · ${fmt(sim.reduce((a, q) => a + q.s, 0))}</span></div>
+      <div class="cmd"><b>${'plan'}</b>
+${'quit'}: Xcode, Spotify
+FileManager.trashItem × ${tr.length}${sim.length ? `
+xcrun simctl … × ${sim.length}  # sudo` : ''}
+${'re-check rules at confirm'}
+${'no symlinks followed'}</div>
+      <button class="btn btn-pri" style="width:100%;justify-content:center;margin-top:12px" data-act="trash" ${tot ? '' : 'disabled'}>${I('trash')}${'Move to Trash'} <span class="kbd" style="color:inherit;box-shadow:inset 0 0 0 1px currentColor;opacity:.6">⌘⌫</span></button>
+      <p class="faint" style="font-size:11px;margin-top:8px;line-height:1.45">${'Undo restores every item to its original path.'}</p></div></aside></div>`;
+}
+function B_assistant() {
+  const msgs = chatData();
+  const body = msgs.map(m => {
+    if (m.u) return `<div class="m"><div class="who">you</div><div class="body">${m.u}</div></div>`;
+    if (m.prop) return `<div class="m"><div class="who"></div><div class="body">${propCard(m.prop)}</div></div>`;
+    if (m.advice) return `<div class="m"><div class="who"></div><div class="body">${adviceCard()}</div></div>`;
+    if (m.rejected) return `<div class="m"><div class="who"></div><div class="body">${rejCard()}</div></div>`;
+    return `<div class="m"><div class="who ai">claude</div><div class="body">${m.tools ? toolChips(m.tools) : ''}${m.a.map(p => `<p>${p}</p>`).join('')}</div></div>`;
+  }).join('');
+  const TR = [['get_disk_overview', '{}', '3 ms', 'total 460 · free 18.0 · snapshots 0'], ['get_category_summary', '{}', '11 ms', '9 categories · 442.0 GB'],
+    ['get_largest_items', '{path:"~/Projects",limit:20}', '24 ms', '20 items · node_modules 4.1 GB'], ['inspect_path', '{path:"~/Library/Caches"}', '6 ms', 'safe · cache.user_app · 16.2 GB'],
+    ['get_app_info', '{bundle_id:"com.autodesk.fusion360"}', '18 ms', 'last used: unknown · 2 builds'], ['propose_deletion', '{paths:[12×node_modules]}', '9 ms', '12 pending your approval · nothing deleted'],
+    ['propose_deletion', '{paths:["~/Downloads/*.dmg"]}', '7 ms', '7 pending your approval · nothing deleted'], ['propose_deletion', '{paths:["~/Pictures/Photos Library…"]}', '2 ms', 'rejected 1 · media.photos is protected', 1]];
+  return `<div class="agrid"><div class="chat"><div class="sh" style="margin-top:8px"><h2>${'Assistant'}</h2><small>claude -p · stream-json · --tools "" · mcp: lightwell</small></div>
+    <div class="chat-b">${body}</div><div style="padding-top:10px">${composer()}</div></div>
+    <aside class="trace" style="margin-top:8px"><div class="trace-h"><span>${'Tool trace'}</span><span>${TR.length} ${'calls'}</span></div>
+    <div class="trace-b">${TR.map(t => `<div class="tr ${t[4] ? 'rej' : ''}"><span class="ms">${t[2]}</span><b>${t[0]}</b><br>${esc(t[1])}<br>→ ${esc(t[3])}</div>`).join('')}</div></aside></div>`;
+}
+
+/* =============================== Direction C: Companion =============================== */
+const WAF_ORDER = ['proj', 'dev', 'caches', 'dl', 'appdata', 'apps', 'media', 'other', 'sys'];
+function wafCells() {
+  const order = WAF_ORDER;
+  const safeTiles = { dev: 31, caches: 14 };
+  const cells = [];
+  order.forEach(c => { const v = Math.round(CATSUM.find(x => x[0] === c)[1]) + (c === 'other' ? 1 : 0); for (let i = 0; i < v; i++) cells.push({ c, safe: i < (safeTiles[c] || 0) }); });
+  const freeT = Math.round(S.free); while (cells.length > TOTAL - freeT) cells.pop();
+  for (let i = 0; i < freeT; i++) cells.push({ free: true });
+  return cells.slice(0, TOTAL);
+}
+function C_rail(content, foot = composer()) {
+  return `<aside class="rail"><div class="rail-h"><span class="who"><span class="mark">${I('star')}</span>Claude</span>
+    <button class="cap" data-act="nav" data-screen="${S.screen === 'assistant' ? 'overview' : 'assistant'}" aria-label="expand">${I('side')}</button></div>
+    <div class="rail-b">${content}</div><div class="rail-f">${foot}</div></aside>`;
+}
+function C_shell(rail, body) {
+  const seg = ['overview', 'scan', 'explore', 'cleanup'];
+  const segName = s => ({ overview: 'Disk', scan: 'Scan', explore: 'Map', cleanup: 'Queue' })[s];
+  return `<div class="win dC ${S.screen === 'assistant' ? 'wide' : ''}">${lights()}${rail}
+  <main class="main"><div class="tb"><div class="segc">${seg.map(s => `<button data-act="nav" data-screen="${s}" aria-pressed="${S.screen === s}">${segName(s)}${s === 'cleanup' ? ` <span class="num" style="opacity:.6">${fmt(selTotal(), 0)}</span>` : ''}</button>`).join('')}</div>
+    <span style="flex:1"></span><button class="cap" data-act="nav" data-screen="scan">${I('redo')}</button></div>
+  <div class="content"><div class="screen">${body}</div></div></main>${sheetHTML()}${toastHTML()}</div>`;
+}
+function C_overviewRail() {
+  return `<div class="msg-a voice"><p class="big">${`You have ${fmt(S.free, 0)} left. I can get you to ${fmt(S.free + RECL.safe, 0)} without touching anything personal.`}</p>
+    <p>${`That is <b>45.1 GB</b> of caches and Xcode build files that rebuild on their own. It is ticked in your queue; nothing moves until you press the button.`}</p>
+    <p>${`After that, the big decisions are your old projects (44.4 GB, already on the Mac Studio) and Autodesk Fusion (22.4 GB). A full scan will show me the details.`}</p></div>
+    <div style="display:flex;gap:8px;margin:14px 0 6px"><button class="btn btn-pri" data-act="nav" data-screen="scan">${I('scan')}${'Run a full scan'}</button><button class="btn btn-sec" data-act="nav" data-screen="cleanup">${'See the safe pass'}</button></div>
+    <p class="faint" style="font-size:11.5px;margin-top:10px">${'Based on a 0.8 second look at 41 known places. Names and sizes only.'}</p>`;
+}
+function C_overview() {
+  const cells = wafCells();
+  const cs = WAF_ORDER.map(c => CATSUM.find(x => x[0] === c));
+  return `<h2>${'Macintosh HD, in 460 squares'}</h2>
+    <p class="sub">${'Each square is one gigabyte. Empty outlines are free space. Hover a colour to find it.'}</p>
+    <div class="ov-row"><div><div class="waffle ${S.safeHi ? 'hi' : ''}" id="waf" style="grid-template-columns:repeat(23,15px)">${cells.map(t => t.free ? `<i class="free" data-tip="${'Free'}|1 GB|"></i>` : `<i class="${t.safe ? 'safe' : ''}" data-cat="${t.c}" style="background:${catVar(t.c)}" data-tip="${catName(t.c)}|${t.safe ? 'safe to clear' : '1 GB'}|"></i>`).join('')}</div>
+      <button class="toggle" data-act="safehi"><span class="sw ${S.safeHi ? 'on' : ''}"></span>${'Show the 45 squares that are safe to clear'}</button></div>
+      <div class="facts"><div class="fact"><small>${'Free now'}</small><b class="num">${fmt(S.free)}</b></div>
+        <div class="fact"><small>${'Safe to clear'}</small><b class="num safe">${fmt(RECL.safe)}</b></div>
+        <div class="fact"><small>${'Worth a look'}</small><b class="num">${fmt(RECL.review)}</b></div>
+        <div class="fact"><small>${'Keep (Photos, Messages)'}</small><b class="num" style="color:var(--ink3)">${fmt(RECL.keep)}</b></div></div></div>
+    <div class="wlegend">${cs.map(([c, v]) => `<div data-hover-cat="${c}"><i class="dot" style="background:${catVar(c)}"></i>${catName(c)}<b class="num">${fmt(v, 0)}</b></div>`).join('')}</div>
+    <div class="vols"><div class="volc">${I('disk')}<div><b>Macintosh HD</b><small>${'Internal · 460 GB'}</small></div></div>
+      <div class="volc">${I('net')}<div><b>Mac Studio</b><small>${'Not connected'}</small></div></div>
+      <div class="volc" style="box-shadow:none;background:var(--fill)">${I('folder')}<div><b>${'A folder'}</b><small>${'Drop one here'}</small></div></div></div>`;
+}
+function C_scanRail() {
+  const v = scanVals();
+  const notes = [
+    [.08, 'DerivedData is <b>15.0 GB</b>. That is safe; Xcode rebuilds it.'],
+    [.22, 'Your projects folder is <b>44.4 GB</b>. Twelve node_modules folders inside add up to 4.1 GB.'],
+    [.30, 'Autodesk keeps two complete copies of Fusion. I will explain when we get there.'],
+    [.38, 'Photos Library is 20.5 GB. I only read its size, not your pictures.'],
+    [.66, '~/.claude is 10.1 GB. Careful there: Lightwell itself talks to Claude through it.'],
+    [.92, 'Simulator runtimes: 19.1 GB. Those need simctl and your admin password.']];
+  return `<div class="live"><span class="pulse"></span>${S.scan.done ? 'Scan finished. Here is what matters.' : 'Watching the scan with you'}</div>
+    <div class="msg-a voice" id="sc-notes">${notes.filter(n => n[0] <= S.scan.p).map(n => `<p>${n[1]}</p>`).join('')}</div>
+    ${S.scan.done ? `<div class="msg-a voice"><p>${'Done. Want me to walk you through the review items, biggest first?'}</p></div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-pri" data-act="nav" data-screen="assistant">${'Yes, walk me through'}</button><button class="btn btn-sec" data-act="nav" data-screen="explore">${'Open the map'}</button></div>` : ''}`;
+}
+function C_scan() {
+  const v = scanVals(); const cells = wafCells(); const lit = Math.round(USED * ease(S.scan.p));
+  return `<h2>${S.scan.done ? 'Every square accounted for' : 'Filling in the picture'}</h2>
+    <p class="sub" id="sc-read">${S.scan.done ? 'Finished in 1:12. Lightwell keeps the index and only rechecks what changes.' : esc(READING[Math.floor(S.scan.p * 40) % READING.length])}</p>
+    <div class="counters"><div><small>${'Files'}</small><b class="num" id="sc-files">${fnum(v.files)}</b></div><div><small>${'Folders'}</small><b class="num" id="sc-dirs">${fnum(v.dirs)}</b></div>
+      <div><small>${'Measured'}</small><b class="num" id="sc-gb">${fmt(v.gb)}</b></div><div><small>${'Elapsed'}</small><b class="num" id="sc-t">${tclock(v.sec)}</b></div></div>
+    <div class="waffle" id="sc-waf" style="grid-template-columns:repeat(23,15px)">${cells.map((t, i) => t.free ? `<i class="free"></i>` : `<i class="${i < lit ? '' : 'empty'}" style="${i < lit ? `background:${catVar(t.c)}` : ''}" data-c="${t.c}"></i>`).join('')}</div>
+    <div style="margin-top:16px">${S.scan.done ? `<button class="btn btn-pri" data-act="nav" data-screen="explore">${I('map')}${'Open the map'}</button>` : `<button class="btn btn-sec" data-act="nav" data-screen="overview">${I('stop')}${'Stop'}</button>`}</div>`;
+}
+function C_explore() {
+  const node = BYID[S.focus.C];
+  const units = [1, .5, .25, .1, .05]; const unit = units.find(u => node.s / u <= 420) || .05;
+  const unitLbl = unit >= 1 ? '1 GB' : (unit * 1000) + ' MB';
+  const blocks = node.k.map((k, gi) => {
+    const n = Math.max(1, Math.round(k.s / unit)); const cols = Math.max(1, Math.min(n, Math.ceil(Math.sqrt(n * 1.8))));
+    const tiles = []; const parts = k.k.length ? k.k : [k]; let left = n;
+    parts.forEach((pp, i) => { let c = i === parts.length - 1 ? left : Math.round(pp.s / k.s * n); c = Math.min(c, left); left -= c; for (let j = 0; j < c; j++) tiles.push(pp); });
+    while (tiles.length < n) tiles.push(k);
+    const w = cols * 17 - 3;
+    return `<div class="blk" data-g="${gi}" ${k.k.length ? `data-act="drill" data-id="${k.id}"` : ''} ${tipAttr(k)} style="cursor:${k.k.length ? 'pointer' : 'default'}">
+      <div class="blk-t" style="grid-template-columns:repeat(${cols},14px);${k.r === 'locked' ? 'opacity:.5' : ''}">${tiles.map(t => `<i style="background:${catVar(t.c)}"></i>`).join('')}</div>
+      <div class="blk-l" style="width:${Math.max(w, 96)}px"><b>${esc(dispName(k))}</b><span class="num">${fmt(k.s)}</span>${k.r ? `<i class="rdot" style="background:var(--${k.r === 'locked' ? 'keep' : k.r})" title="${riskLabel(k.r)}"></i>` : ''}</div></div>`;
+  }).join('');
+  return `<div class="crumbs">${crumbsA(node)}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end"><h2>${esc(dispName(node))} <span class="num" style="color:var(--ink2);font-size:18px">${fmt(node.s)}</span></h2><span class="unit"><i></i>= ${unitLbl}</span></div>
+    <p class="sub">${'One block per folder, biggest first; colours show what is inside. Click a block to go in.'}</p>
+    <div class="blocks">${blocks}</div>
+    <div class="rkey"><span><i class="rdot" style="background:var(--safe)"></i>${riskLabel('safe')}</span><span><i class="rdot" style="background:var(--review)"></i>${riskLabel('review')}</span><span><i class="rdot" style="background:var(--keep)"></i>${riskLabel('keep')}</span></div>`;
+}
+function C_exploreRail() {
+  const node = BYID[S.focus.C];
+  const NOTES = {
+    home: 'Your home folder is <b>296 GB</b>. Half of it is <b>Library</b>, where apps keep caches and support files. Your projects folder is the largest thing you made yourself.',
+    Library: 'Library holds <b>150 GB</b>. The pieces I would look at first: Application Support (Autodesk alone is 22.4 GB), Developer, and Caches, which is all safe.',
+    Developer: 'This is Xcode’s workshop. <b>DerivedData</b> and <b>iOS DeviceSupport</b> are safe. <b>CoreSimulator</b> holds your test devices; pick those one at a time.',
+    'Projects': 'These match the projects on your Mac Studio by name. Connect it and I will compare them before you remove anything.'
+  };
+  const key = node.id === 'home' ? 'home' : node.n;
+  const note = NOTES[key] || `<b>${esc(dispName(node))}</b> is ${fmt(node.s)}. Ask me about anything in it.`;
+  return `<div class="live">${I('eye')}${'Looking at'} <span class="mono">${esc(pathOf(node))}</span></div><div class="msg-a voice"><p>${note}</p></div>
+    ${toolChips([['eye', 'Looked at', pathOf(node)]])}`;
+}
+function C_cleanup() {
+  const tot = selTotal();
+  return `<h2>${'Your queue'}</h2><p class="sub">${'I ticked only what rebuilds itself. Everything else waits for you.'}</p>
+    ${['build', 'cache', 'review', 'keep'].map(g => `<div class="grp-h"><h4>${grpName(g)}</h4><span class="num">${fmt(Q.filter(q => q.g === g).reduce((a, q) => a + q.s, 0))}</span></div>` +
+      Q.filter(q => q.g === g).map(q => { const on = S.sel.has(q.id), can = checkable(q);
+        const by = q.prop && S.props[q.prop] === 'approved' ? `<span class="bychip">${I('check')}${'You approved'}</span>` : '';
+        return `<div class="qi"><button class="check ${on ? 'on' : ''} ${can ? '' : 'na'}" ${can ? `data-act="toggle" data-id="${q.id}"` : ''}>${I('check')}</button>
+        <div><div class="nm">${q.n} ${risk(q.r)} ${by}</div><div class="why">${q.why()}</div></div><div class="s num">${fmt(q.s)}</div></div>`; }).join('')).join('')}
+    <div class="qbar"><div><div class="muted" style="font-size:12px">${'Free after'} ${fmt(S.free + tot, 0)}</div><div class="tot num">${fmt(tot)}</div></div><span style="flex:1"></span>
+      <button class="btn btn-pri" data-act="trash" ${tot ? '' : 'disabled'}>${I('trash')}${'Move to Trash'}</button></div>`;
+}
+function C_cleanupRail() {
+  return `<div class="msg-a voice"><p>${`Ticked: <b>${fmt(selTotal())}</b>. All of it goes to the Trash, so you can change your mind until you empty it.`}</p>
+    <p>${'Two notes: you have no Time Machine backup, and I will ask Xcode and Spotify to quit first.'}</p></div>
+    ${S.props.p1 === 'pending' || S.props.p2 === 'pending' ? `<div class="msg-a voice"><p>${'I also have two proposals for you:'}</p></div>${S.props.p1 === 'pending' ? propCard('p1') : ''}${S.props.p2 === 'pending' ? propCard('p2') : ''}` : ''}`;
+}
+function C_assistantTray() {
+  const sel = [...S.sel].map(id => QBY[id]);
+  return `<div class="tray"><h3>${'Queue'}</h3><p class="sub" style="margin:0">${'What you have approved so far.'}</p>
+    <div class="tot num">${fmt(selTotal())}</div><div class="muted" style="font-size:12px;margin-bottom:12px">${'free after'} ${fmt(S.free + selTotal(), 0)}</div>
+    <ul>${sel.map(q => `<li><span>${q.n}</span><span class="num">${fmt(q.s)}</span></li>`).join('')}</ul>
+    <button class="btn btn-pri" style="margin-top:14px" data-act="nav" data-screen="cleanup">${'Review and move'}</button></div>`;
+}
+
+/* =============================== render =============================== */
+const DIRS = {
+  A: { name: () => 'Daylight', desc: () => 'Calm, airy and native. Free space is drawn as light coming into the building, the map is a squarified treemap that reads like a floor plan, and Claude lives in a glass inspector you open when you want it.' },
+  B: { name: () => 'Core Sample', desc: () => 'Dense, exact, keyboard first. The disk is a core sample you read left to right, explored with an icicle chart, monospaced figures, rule IDs and a visible tool trace for people who want to see exactly what will run.' },
+  C: { name: () => 'Companion', desc: () => 'Conversation first. Claude opens with a plain-language brief in a bookish serif voice, the disk is 460 countable one-gigabyte squares, and the assistant stays beside you on every screen.' }
+};
+function renderWindow() {
+  const d = S.dir, s = S.screen;
+  if (d === 'A') {
+    if (s === 'assistant') return A_shell(A_overview(), A_assistantPanel());
+    return A_shell({ overview: A_overview, scan: A_scan, explore: A_explore, cleanup: A_cleanup }[s]());
+  }
+  if (d === 'B') return B_shell({ overview: B_overview, scan: B_scan, explore: B_explore, cleanup: B_cleanup, assistant: B_assistant }[s](), s === 'explore' ? BYID[S.focus.B] : null);
+  const rail = { overview: C_overviewRail, scan: C_scanRail, explore: C_exploreRail, cleanup: C_cleanupRail, assistant: () => chatHTML({ voice: true }) }[s]();
+  const body = { overview: C_overview, scan: C_scan, explore: C_explore, cleanup: C_cleanup, assistant: C_assistantTray }[s]();
+  return C_shell(C_rail(rail), body);
+}
+function render() {
+  document.body.classList.toggle('dark', S.theme === 'dark');
+  document.getElementById('brandsub').textContent = 'three directions · working name';
+  document.getElementById('tabs').innerHTML = ['A', 'B', 'C'].map(k => `<button class="tab" data-act="dir" data-d="${k}" aria-pressed="${S.dir === k}"><small>${k}</small>${DIRS[k].name()}</button>`).join('');
+  document.getElementById('themeSeg').innerHTML = `<button data-act="theme" data-v="light" aria-pressed="${S.theme === 'light'}">${'Light'}</button><button data-act="theme" data-v="dark" aria-pressed="${S.theme === 'dark'}">${'Dark'}</button>`;
+  document.getElementById('dirdesc').innerHTML = `<h2>${S.dir} · ${DIRS[S.dir].name()}</h2><p>${DIRS[S.dir].desc()}</p>`;
+  const st = document.getElementById('stage'); st.className = 'stage wall-' + S.dir; st.innerHTML = renderWindow();
+  document.getElementById('jump').innerHTML = SCREENS.map((s, i) => `<button data-act="nav" data-screen="${s}" aria-pressed="${S.screen === s}"><kbd>${i + 1}</kbd>${scrName(s)}</button>`).join('');
+  document.getElementById('foot').innerHTML = `<div>${'<b>Lightwell</b> is the recommended name. Alternatives: <b>Atrium</b>, <b>Lacuna</b>. Ruled out for collisions: Headroom, Ballast, Roomy.'}</div>
+    <div>${'Real numbers from this Mac, 12 October 2026. Mockup only: nothing here touches your disk.'}</div>`;
+  fit();
+  if (S.screen === 'scan' && !S.scan.done) startScan();
+}
+function fit() { const st = document.getElementById('stage'); const z = Math.min(1, (window.innerWidth - 40) / 1256); st.style.zoom = z; }
+window.addEventListener('resize', fit);
+
+/* scan animation: updates numbers in place, re-renders only when a new row or note lands */
+function startScan() {
+  cancelAnimationFrame(S.scan.raf);
+  if (S.scan.freeze) return;
+  if (S.scan.p >= 1) { S.scan.done = true; return; }
+  const DUR = 9000; S.scan.t0 = performance.now() - S.scan.p * DUR; let lastCount = scanVals().items.length;
+  const tick = now => {
+    if (S.screen !== 'scan') return;
+    S.scan.p = Math.min(1, (now - S.scan.t0) / DUR);
+    const v = scanVals(); const set = (id, t) => { const e = document.getElementById(id); if (e) e.innerHTML = t; };
+    set('sc-files', fnum(v.files)); set('sc-dirs', fnum(v.dirs)); set('sc-t', tclock(v.sec)); set('sc-safe', fmt(Math.min(45.1, v.safe)));
+    const gbEl = document.getElementById('sc-gb'); if (gbEl) { if (S.dir === 'A') gbEl.innerHTML = `${fmt(v.gb)}<small>${'of 442 GB used'}</small>`; else gbEl.textContent = fmt(v.gb); }
+    const bar = document.getElementById('sc-bar'); if (bar) bar.style.width = (S.scan.p * 100) + '%';
+    const rd = document.getElementById('sc-read'); if (rd && S.dir !== 'B') rd.innerHTML = (S.dir === 'A' ? I('folder') : '') + esc(READING[Math.floor(S.scan.p * 40) % READING.length]); else if (rd) rd.textContent = READING[Math.floor(S.scan.p * 40) % READING.length];
+    const roots = document.getElementById('sc-roots'); if (roots) roots.innerHTML = rootsB(S.scan.p);
+    const waf = document.getElementById('sc-waf'); if (waf) { const lit = Math.round(USED * ease(S.scan.p)); [...waf.children].forEach((c, i) => { if (!c.classList.contains('free') && i < lit && c.classList.contains('empty')) { c.classList.remove('empty'); c.style.background = catVar(c.dataset.c); } }); }
+    if (S.dir === 'C') { const notes = document.getElementById('sc-notes'); if (notes) { const tmp = document.createElement('div'); tmp.innerHTML = C_scanRail(); const nn = tmp.querySelector('#sc-notes'); if (nn && nn.children.length !== notes.children.length) notes.innerHTML = nn.innerHTML; } }
+    if (v.items.length !== lastCount) { lastCount = v.items.length; const f = document.getElementById('sc-feed'); if (f) f.insertAdjacentHTML('afterbegin', (S.dir === 'A' ? feedRowA : feedRowB)(v.items[v.items.length - 1])); }
+    if (S.scan.p >= 1) { S.scan.done = true; render(); return; }
+    S.scan.raf = requestAnimationFrame(tick);
+  };
+  S.scan.raf = requestAnimationFrame(tick);
+}
+
+/* =============================== events =============================== */
+let toastTimer = 0;
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const a = t.dataset.act;
+  if (a === 'dir') { S.dir = t.dataset.d; }
+  else if (a === 'theme') S.theme = t.dataset.v;
+  else if (a === 'nav') { const sc = t.dataset.screen; if (sc === 'scan' && S.screen !== 'scan' && S.scan.done) { S.scan.p = 0; S.scan.done = false; } S.screen = sc; S.sheet = false; }
+  else if (a === 'drill') { S.focus[S.dir] = t.dataset.id; if (S.screen !== 'explore') S.screen = 'explore'; }
+  else if (a === 'toggle') { const id = t.dataset.id; S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id); }
+  else if (a === 'approve') { const p = t.dataset.p; S.props[p] = 'approved'; S.sel.add(PROPS[p].q); S.added.add(PROPS[p].q); }
+  else if (a === 'dismiss') { S.props[t.dataset.p] = 'dismissed'; }
+  else if (a === 'reprop') { S.props[t.dataset.p] = 'pending'; }
+  else if (a === 'trash') S.sheet = true;
+  else if (a === 'cancel') S.sheet = false;
+  else if (a === 'confirm') {
+    const tot = selTotal(), n = S.sel.size; S.trashed = { sel: new Set(S.sel), free: S.free }; S.free = +(S.free + tot).toFixed(1); S.sel = new Set(); S.sheet = false;
+    S.toast = `Moved ${n} items (${fmt(tot)}) to the Trash. ${fmt(S.free, 0)} free.`;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { S.toast = null; render(); }, 7000);
+  }
+  else if (a === 'undo') { if (S.trashed) { S.sel = S.trashed.sel; S.free = S.trashed.free; S.trashed = null; } S.toast = null; }
+  else if (a === 'safehi') S.safeHi = !S.safeHi;
+  else return;
+  render();
+});
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const i = '12345'.indexOf(e.key); if (i >= 0) { S.screen = SCREENS[i]; if (S.screen === 'scan' && S.scan.done) { S.scan.p = 0; S.scan.done = false; } render(); }
+  if (e.key === 'Escape' && S.sheet) { S.sheet = false; render(); }
+});
+/* tooltip + waffle group hover */
+const tip = document.getElementById('tip');
+document.addEventListener('mousemove', e => {
+  const t = e.target.closest('[data-tip]');
+  if (t) { const [a, b, c] = t.dataset.tip.split('|'); tip.innerHTML = `<b>${a}</b> · ${b}${c ? `<span class="mono">${c}</span>` : ''}`; tip.style.opacity = 1;
+    const x = Math.min(window.innerWidth - 290, e.clientX + 14); tip.style.left = x + 'px'; tip.style.top = (e.clientY + 16) + 'px'; }
+  else tip.style.opacity = 0;
+  const g = e.target.closest('#cwaf [data-g], .glist [data-g]'); const w = document.getElementById('cwaf');
+  if (w) { if (g) { w.classList.add('grp-hover'); [...w.children].forEach(c => c.classList.toggle('on', c.dataset.g === g.dataset.g)); } else w.classList.remove('grp-hover'); }
+  const hc = e.target.closest('[data-hover-cat]'); const wf = document.getElementById('waf');
+  if (wf) { if (hc) { wf.classList.add('grp-hover'); [...wf.children].forEach(c => c.classList.toggle('on', c.dataset.cat === hc.dataset.hoverCat)); } else wf.classList.remove('grp-hover'); }
+});
+
+/* deep link: #A-explore-dark */
+function parseHash() {
+  const h = location.hash.slice(1).split('-'); h.forEach(p => { if ('ABC'.includes(p) && p.length === 1) S.dir = p; if (SCREENS.includes(p)) S.screen = p; if (p === 'dark' || p === 'light') S.theme = p; if (p === 'done') { S.scan.p = 1; S.scan.done = true; } if (p === 'still') document.body.classList.add('still'); if (p === 'sheet') S.sheet = true; if (/^p\d\d$/.test(p)) { S.scan.p = +p.slice(1) / 100; S.scan.done = false; S.scan.freeze = true; } });
+}
+parseHash();
+if (!location.hash && matchMedia('(prefers-color-scheme: dark)').matches) S.theme = 'dark';
+window.addEventListener('hashchange', () => { parseHash(); render(); });
+render();
+</script>
+</body>
+</html>

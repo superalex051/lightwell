@@ -1,0 +1,114 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "tile.accessibilityLabel": {
+      "comment": "Accessibility label of a space map tile: item name, then its size",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "%lld small items": {
+      "comment": "Space map tile that groups many small files and folders",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld small item"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld small items"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Opens this folder in the map.": {
+      "comment": "Accessibility hint for a folder tile in the space map",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens this folder in the map."
+          }
+        }
+      }
+    },
+    "Shows the small items as separate blocks.": {
+      "comment": "Accessibility hint for the merged small items tile",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shows the small items as separate blocks."
+          }
+        }
+      }
+    },
+    "Space map": {
+      "comment": "Accessibility label of the space map: blocks sized by how much space each item uses",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Space map"
+          }
+        }
+      }
+    },
+    "%lld bytes": {
+      "comment": "Size below one kilobyte",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld byte"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld bytes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "byteFormat.size": {
+      "comment": "Size: a number with three significant digits, then a unit such as GB",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

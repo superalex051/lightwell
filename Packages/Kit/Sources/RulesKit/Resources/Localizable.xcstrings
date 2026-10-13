@@ -1,0 +1,116 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "This disk is read only.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This disk is read only."
+          }
+        }
+      }
+    },
+    "This folder holds other important folders, so it stays.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This folder holds other important folders, so it stays."
+          }
+        }
+      }
+    },
+    "This holds personal data such as passwords or messages.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This holds personal data such as passwords or messages."
+          }
+        }
+      }
+    },
+    "This is a backup. Manage it in the app that made it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is a backup. Manage it in the app that made it."
+          }
+        }
+      }
+    },
+    "This is a summary row, not a real item.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is a summary row, not a real item."
+          }
+        }
+      }
+    },
+    "This belongs to macOS or to an installed app, so it is never removed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This belongs to macOS or to an installed app, so it is never removed."
+          }
+        }
+      }
+    },
+    "This is synced with the cloud. Removing it here removes it everywhere.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is synced with the cloud. Removing it here removes it everywhere."
+          }
+        }
+      }
+    },
+    "This is the folder being scanned.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is the folder being scanned."
+          }
+        }
+      }
+    },
+    "This item changed after the scan. Rescan to continue.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item changed after the scan. Rescan to continue."
+          }
+        }
+      }
+    },
+    "This item is not part of the current scan.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This item is not part of the current scan."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
